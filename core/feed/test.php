@@ -6,9 +6,9 @@ date_default_timezone_set('America/Argentina/Buenos_Aires');
 
 if (isset($_SESSION['user_id'])) {
     $sql = "SELECT posts.*, users.username, users.display_name, users.avatar,
-                   COUNT(likes.id) AS likes_count,
-                   (SELECT 1 FROM likes WHERE likes.user_id = ? AND likes.post_id = posts.id) AS is_liked,
-                   (SELECT 1 FROM follows WHERE follower_id = ? AND followed_id = posts.user_id) AS is_followed
+                   COUNT(DISTINCT likes.id) AS likes_count,
+                   EXISTS(SELECT 1 FROM likes WHERE likes.user_id = ? AND likes.post_id = posts.id) AS is_liked,
+                   EXISTS(SELECT 1 FROM follows WHERE follower_id = ? AND followed_id = posts.user_id) AS is_followed
             FROM posts
             JOIN users ON posts.user_id = users.id
             LEFT JOIN likes ON likes.post_id = posts.id
@@ -21,7 +21,7 @@ if (isset($_SESSION['user_id'])) {
     $result = $stmt->get_result();
 } else {
     $sql = "SELECT posts.*, users.username, users.display_name, users.avatar,
-                   COUNT(likes.id) AS likes_count,
+                   COUNT(DISTINCT likes.id) AS likes_count,
                    0 AS is_liked
             FROM posts
             JOIN users ON posts.user_id = users.id
