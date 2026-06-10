@@ -2,6 +2,7 @@
 session_start();
 include("../db/db.php");
 include("../extras/csrf.php");
+include("../extras/generate_uuid.php");
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../../index.php");
@@ -19,6 +20,35 @@ $display_name = trim($_POST['display_name'] ?? '');
 $bio = trim($_POST['bio'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $avatar = trim($_POST['avatar'] ?? '');
+
+// Handle local file upload (takes priority over URL)
+if (!empty($_FILES['avatar_file']['tmp_name'])) {
+    $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = finfo_file($finfo, $_FILES['avatar_file']['tmp_name']);
+    finfo_close($finfo);
+
+    if (!in_array($mime, $allowed)) {
+        die("Formato de imagen no permitido (JPEG, PNG, GIF, WebP)");
+    }
+
+    $ext = match ($mime) {
+        'image/jpeg' => 'jpg',
+        'image/png'  => 'png',
+        'image/gif'  => 'gif',
+        'image/webp' => 'webp',
+        default      => 'jpg'
+    };
+
+    $filename = generateUUID() . '.' . $ext;
+    $dest = __DIR__ . '/../../uploads/avatars/' . $filename;
+
+    if (!move_uploaded_file($_FILES['avatar_file']['tmp_name'], $dest)) {
+        die("Error al subir la imagen");
+    }
+
+    $avatar = 'uploads/avatars/' . $filename;
+}
 
 if (empty($username) || empty($email)) {
     die("Campos requeridos vacíos");
