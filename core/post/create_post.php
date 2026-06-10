@@ -3,19 +3,28 @@ session_start();
 include("../db/db.php");
 include("../extras/generate_uuid.php");
 include("./images/upload_image.php");
+include("../extras/csrf.php");
 
-// 🔒 proteger ruta
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../../index.php");
     exit;
 }
 
+$csrf_token = $_POST['csrf_token'] ?? '';
+if (!verifyCsrfToken($csrf_token)) {
+    die("Error de validación");
+}
+
 // obtener datos
-$content = $_POST['content'] ?? '';
+$content = trim($_POST['content'] ?? '');
 
 // validar
 if (empty($content)) {
     die("Post vacío");
+}
+
+if (strlen($content) > 2000) {
+    die("El contenido es demasiado largo");
 }
 
 // obtener usuario desde sesión

@@ -1,26 +1,51 @@
 <?php
-include("./core/db/db.php");
-include("./core/extras/format_datetime.php");
+require_once(__DIR__ . '/../db/db.php');
+require_once(__DIR__ . '/../extras/format_datetime.php');
 
-// NOTE: Si es posible en vez de usar una api gratis de imagenes random
-// NOTE: Usar o implementar un sistema de subida de imagenes
-// TODO: Buscar Servidores de Alojamiento de imagenes
-
-// timezone adecuado para que la funcion de parsear el tiempo funcione correctamente
 date_default_timezone_set('America/Argentina/Buenos_Aires');
 
-// Traer posts + likes
-$sql = "SELECT posts.*, users.username,
-               COUNT(likes.id) AS likes_count
-        FROM posts
-        JOIN users ON posts.user_id = users.id
-        LEFT JOIN likes ON likes.post_id = posts.id
-        GROUP BY posts.id
-        ORDER BY posts.created_at DESC";
+if (isset($_SESSION['user_id'])) {
+    $sql = "SELECT posts.*, users.username, users.display_name, users.avatar,
+                   COUNT(likes.id) AS likes_count,
+                   (SELECT 1 FROM follows WHERE follower_id = ? AND followed_id = posts.user_id) AS is_followed
+            FROM posts
+            JOIN users ON posts.user_id = users.id
+            LEFT JOIN likes ON likes.post_id = posts.id
+            GROUP BY posts.id
+            ORDER BY is_followed DESC, posts.created_at DESC";
 
-$result = $conn->query($sql);
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $_SESSION['user_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    $sql = "SELECT posts.*, users.username, users.display_name, users.avatar,
+                   COUNT(likes.id) AS likes_count
+            FROM posts
+            JOIN users ON posts.user_id = users.id
+            LEFT JOIN likes ON likes.post_id = posts.id
+            GROUP BY posts.id
+            ORDER BY posts.created_at DESC";
+
+    $result = $conn->query($sql);
+    if ($result === false) {
+        $result = new mysqli_result();
+    }
+}
 ?>
 
-<?php while ($data = $result->fetch_assoc()): ?>
-    <?php include("./components/post_card.php"); ?>
-<?php endwhile; ?>
+<?php if (!$result || $result->num_rows === 0): ?>
+    <div class="text-center py-16">
+        <i class="bi bi-journal-text text-5xl text-muted"></i>
+        <p class="text-muted mt-4 text-sm">No hay publicaciones aún</p>
+        <?php if (isset($_SESSION['user_id'])): ?>
+            <p class="text-muted text-xs mt-1">¡Sé el primero en publicar!</p>
+        <?php else: ?>
+            <a href="?mode=register" class="btn-accent inline-block mt-3 px-4 py-2 rounded-lg text-sm text-white font-semibold transition">Regístrate</a>
+        <?php endif; ?>
+    </div>
+<?php else: ?>
+    <?php while ($data = $result->fetch_assoc()): ?>
+        <?php include("./components/post_card.php"); ?>
+    <?php endwhile; ?>
+<?php endif; ?>

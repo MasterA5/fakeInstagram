@@ -1,10 +1,16 @@
 <?php
 session_start();
 include("../db/db.php");
+include("../extras/csrf.php");
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../../index.php");
     exit;
+}
+
+$csrf_token = $_POST['csrf_token'] ?? '';
+if (!verifyCsrfToken($csrf_token)) {
+    die("Error de validación");
 }
 
 $user_id = $_SESSION['user_id'];
@@ -46,7 +52,7 @@ try {
 
     $conn->commit();
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
     $conn->rollback();
     die("Error al eliminar");
 }

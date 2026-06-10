@@ -1,13 +1,11 @@
 <?php
 session_start();
 
-// 🔒 si ya está logueado, redirigir al login (NOTE: sacado de stack overflow)
 if (isset($_SESSION['user_id'])) {
     header("Location: ../../index.php");
     exit;
 }
 
-// 🔒 solo permitir POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: ../../index.php");
     exit;
@@ -15,19 +13,26 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 include("../db/db.php");
 include("../extras/generate_uuid.php");
+include("../extras/csrf.php");
 
-// TODO[☑]: Crear un sistema de uuid para identificadores unicos (uuid)
+$csrf_token = $_POST['csrf_token'] ?? '';
+if (!verifyCsrfToken($csrf_token)) {
+    die("Error de validación");
+}
 
 // Traer datos
 $username = trim($_POST['username'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
+$password_confirm = $_POST['password_confirm'] ?? '';
 
 // Validación del usuario
-// TODO: Mejorar la autenticacion
-// TODO: Buscar mejores maneras de autenticar y validar datos
 if (empty($username) || empty($email) || empty($password)) {
     die("Campos vacíos");
+}
+
+if ($password !== $password_confirm) {
+    die("Las contraseñas no coinciden");
 }
 
 // Validar email
@@ -46,28 +51,24 @@ if ($result->num_rows > 0) {
     die("Usuario o email ya existe");
 }
 
-// Hash de contraseña
-// NOTE: ❌ No se debe guardar la contraseña en texto plano en la base de datos
-// NOTE: ❌ Tampoco el hash debe ser demasiado grande
 $hash = password_hash($password, PASSWORD_DEFAULT);
 
 // Generar un uuid para un id mas seguro
 $id = generateUUID();
 
+$avatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' . urlencode($username);
+
 // Insertar al usuario
-$sql = "INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)";
+$sql = "INSERT INTO users (id, username, email, password, avatar) VALUES (?, ?, ?, ?, ?)";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("ssss", $id, $username, $email, $hash);
+$stmt->bind_param("sssss", $id, $username, $email, $hash, $avatar);
 
 if ($stmt->execute()) {
 
-    // ✔ Crear la sesión automáticamente
     $_SESSION['user_id'] = $id;
     $_SESSION['username'] = $username;
+    $_SESSION['avatar'] = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' . urlencode($username);
 
-    // Redirigir al index.php
-    // TODO[☑]: Hacer un render condicional en el index para 
-    // No mostrar nada protejido a un usuario no autenticado
     header("Location: ../../index.php");
     exit;
 

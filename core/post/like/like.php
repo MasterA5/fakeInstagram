@@ -2,11 +2,16 @@
 session_start();
 include("../../db/db.php");
 include("../../extras/generate_uuid.php");
+include("../../extras/csrf.php");
 
-// 🔒 proteger
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../../index.php");
     exit;
+}
+
+$csrf_token = $_POST['csrf_token'] ?? '';
+if (!verifyCsrfToken($csrf_token)) {
+    die("Error de validación");
 }
 
 $user_id = $_SESSION['user_id'];
@@ -18,7 +23,6 @@ if (!$post_id) {
 
 // ¿ya existe like?
 $sql = "SELECT id FROM likes WHERE user_id = ? AND post_id = ?";
-$id = generateUUID();
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ss", $user_id, $post_id);
 $stmt->execute();
@@ -32,6 +36,7 @@ if ($result->num_rows > 0) {
     $stmt->execute();
 } else {
     // ❤️ dar like
+    $id = generateUUID();
     $sql = "INSERT INTO likes (id, user_id, post_id) VALUES (?, ?, ?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sss", $id, $user_id, $post_id);

@@ -2,14 +2,20 @@
 session_start();
 include("../db/db.php");
 require("./images/upload_image.php");
+include("../extras/csrf.php");
 
 if (!isset($_SESSION['user_id'])) {
     die("No autorizado");
 }
 
-$post_id = $_POST['post_id'];
+$csrf_token = $_POST['csrf_token'] ?? '';
+if (!verifyCsrfToken($csrf_token)) {
+    die("Error de validación");
+}
+
+$post_id = $_POST['post_id'] ?? null;
 $user_id = $_SESSION['user_id'];
-$content = $_POST['content'];
+$content = trim($_POST['content'] ?? '');
 
 // verificar dueño
 $stmt = $conn->prepare("SELECT user_id FROM posts WHERE id = ?");
@@ -23,17 +29,12 @@ if (!$post || $post['user_id'] !== $user_id) {
 }
 
 // subir nueva imagen si hay
-$newImage = uploadImage($_FILES['image'] ?? []);
+$imageUrl = uploadImage($_FILES['image'] ?? []);
 
-if (!empty($newImage['url'])) {
-
-    $imageUrl = $newImage['url'];
-
+if (!empty($imageUrl)) {
     $stmt = $conn->prepare("UPDATE posts SET content = ?, image = ? WHERE id = ?");
-    $stmt->bind_param("ssss", $content, $imageUrl, $deleteUrl, $post_id);
-
+    $stmt->bind_param("sss", $content, $imageUrl, $post_id);
 } else {
-    // solo texto
     $stmt = $conn->prepare("UPDATE posts SET content = ? WHERE id = ?");
     $stmt->bind_param("ss", $content, $post_id);
 }
