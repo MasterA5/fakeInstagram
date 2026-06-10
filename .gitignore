@@ -2,5 +2,5 @@
 *.log
 node_modules/
 .vscode/
-uploads/avatars/
-uploads/*
+uploads/avatars/*
+!uploads/avatars/.gitkeep
