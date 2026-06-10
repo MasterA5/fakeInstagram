@@ -106,108 +106,14 @@
         </div>
 
         <?php if (isset($_SESSION['user_id'])): ?>
-            <form class="comment-form flex items-center gap-2" style="border-top: 1px solid var(--border); padding-top: 8px;">
-                <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
-                <input type="hidden" name="post_id" value="<?= $data['id'] ?>">
-                <input id="comment-input-<?= $data['id'] ?>" type="text" name="content" placeholder="Agrega un comentario..." class="flex-1 bg-transparent text-sm py-1 border-0 focus:outline-none" style="color: var(--text-primary);" autocomplete="off">
-                <button type="submit" class="text-sm font-semibold transition opacity-60 hover:opacity-100" style="color: var(--accent);">Publicar</button>
-            </form>
+            <div class="comment-form flex items-center gap-2" style="border-top: 1px solid var(--border); padding-top: 8px;">
+                <input type="hidden" class="csrf-input" value="<?= generateCsrfToken() ?>">
+                <input type="hidden" class="post-id-input" value="<?= $data['id'] ?>">
+                <input id="comment-input-<?= $data['id'] ?>" type="text" placeholder="Agrega un comentario..." class="flex-1 bg-transparent text-sm py-1 border-0 focus:outline-none comment-input" style="color: var(--text-primary);" autocomplete="off">
+                <button type="button" class="comment-submit text-sm font-semibold transition opacity-60 hover:opacity-100" style="color: var(--accent);">Publicar</button>
+            </div>
         <?php endif; ?>
     </div>
 </div>
 
-<script>
-if (!window._postInteractionsInitialized) {
-    window._postInteractionsInitialized = true;
 
-    function toggleEdit(id) { const el = document.getElementById("edit-" + id); if (el) el.classList.toggle("hidden"); }
-    function toggleMenu(id) { const el = document.getElementById(id); if (el) el.classList.toggle("hidden"); }
-
-    document.addEventListener('click', function(e) {
-        // close menus
-        document.querySelectorAll("[id^='menu-']").forEach(menu => {
-            if (!menu.previousElementSibling?.contains(e.target) && !menu.contains(e.target)) menu.classList.add("hidden");
-        });
-
-        // like
-        const likeBtn = e.target.closest('.like-btn');
-        if (likeBtn) {
-            const postId = likeBtn.dataset.postId;
-            const csrf = likeBtn.dataset.csrf;
-            const icon = likeBtn.querySelector('i');
-            const card = likeBtn.closest('[class*="rounded"]');
-            const likesText = card?.querySelector('.likes-text');
-
-            fetch('./core/post/like/like.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'csrf_token=' + encodeURIComponent(csrf) + '&post_id=' + encodeURIComponent(postId)
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.error) return;
-                icon.className = 'bi ' + (data.liked ? 'bi-heart-fill text-pink-500' : 'bi-heart text-muted hover:text-pink-500');
-                likeBtn.dataset.liked = data.liked ? '1' : '0';
-                if (likesText) likesText.textContent = data.count + ' me gusta';
-            })
-            .catch(() => {});
-            return;
-        }
-
-        // delete comment
-        const delBtn = e.target.closest('.delete-comment');
-        if (delBtn) {
-            const commentId = delBtn.dataset.commentId;
-            const csrf = delBtn.dataset.csrf;
-            if (!commentId) return;
-            fetch('./core/post/comments/delete_comment.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'csrf_token=' + encodeURIComponent(csrf) + '&comment_id=' + encodeURIComponent(commentId)
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    const el = delBtn.closest('[data-comment-id="' + commentId + '"]');
-                    if (el) el.remove();
-                }
-            })
-            .catch(() => {});
-        }
-    });
-
-    // comment submit delegation
-    document.addEventListener('submit', function(e) {
-        const form = e.target.closest('.comment-form');
-        if (!form) return;
-        e.preventDefault();
-        const input = form.querySelector('input[name="content"]');
-        const content = input.value.trim();
-        if (!content) return;
-        const csrf = form.querySelector('input[name="csrf_token"]').value;
-        const postId = form.querySelector('input[name="post_id"]').value;
-        const container = document.querySelector('.comments-container[data-post-id="' + postId + '"]');
-
-        fetch('./core/post/comments/create_comment.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'csrf_token=' + encodeURIComponent(csrf) + '&post_id=' + encodeURIComponent(postId) + '&content=' + encodeURIComponent(content)
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.error || !data.success) return;
-            const div = document.createElement('div');
-            div.className = 'flex items-start gap-2 text-sm group/comment';
-            div.dataset.commentId = data.id;
-            div.innerHTML =
-                '<img src="' + (data.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') + '" class="w-6 h-6 rounded-full flex-shrink-0 mt-0.5">' +
-                '<div class="flex-1 min-w-0"><a href="?profile=' + data.user_id + '" class="font-semibold text-xs" style="color: var(--text-primary);">' + data.username + '</a>' +
-                '<p class="text-sm" style="color: var(--text-primary);">' + data.content.replace(/</g, '&lt;') + '</p></div>' +
-                '<button class="delete-comment opacity-0 group-hover/comment:opacity-100 transition shrink-0 text-muted hover:text-red-400 text-xs p-1" data-comment-id="' + data.id + '" data-csrf="' + csrf + '"><i class="bi bi-trash"></i></button>';
-            if (container) container.prepend(div);
-            input.value = '';
-        })
-        .catch(() => {});
-    });
-}
-</script>

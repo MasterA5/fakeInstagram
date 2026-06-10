@@ -142,5 +142,98 @@ if (isset($_GET['profile'])) {
             <?php endif; ?>
         </div>
     </nav>
+<script>
+function toggleEdit(id) { var el = document.getElementById("edit-" + id); if (el) el.classList.toggle("hidden"); }
+function toggleMenu(id) { var el = document.getElementById(id); if (el) el.classList.toggle("hidden"); }
+
+(function() {
+    document.addEventListener('click', function(e) {
+        // close menus
+        document.querySelectorAll("[id^='menu-']").forEach(function(menu) {
+            if (!menu.previousElementSibling?.contains(e.target) && !menu.contains(e.target)) menu.classList.add("hidden");
+        });
+
+        // like
+        var likeBtn = e.target.closest('.like-btn');
+        if (likeBtn) {
+            var postId = likeBtn.dataset.postId;
+            var csrf = likeBtn.dataset.csrf;
+            var icon = likeBtn.querySelector('i');
+            var card = likeBtn.closest('[class*="rounded"]');
+            var likesText = card?.querySelector('.likes-text');
+
+            fetch('./core/post/like/like.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'csrf_token=' + encodeURIComponent(csrf) + '&post_id=' + encodeURIComponent(postId)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.error) return;
+                icon.className = 'bi ' + (data.liked ? 'bi-heart-fill text-pink-500' : 'bi-heart text-muted hover:text-pink-500');
+                likeBtn.dataset.liked = data.liked ? '1' : '0';
+                if (likesText) likesText.textContent = data.count + ' me gusta';
+            })
+            .catch(function() {});
+            return;
+        }
+
+        // delete comment
+        var delBtn = e.target.closest('.delete-comment');
+        if (delBtn) {
+            var commentId = delBtn.dataset.commentId;
+            var csrf = delBtn.dataset.csrf;
+            if (!commentId) return;
+            fetch('./core/post/comments/delete_comment.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'csrf_token=' + encodeURIComponent(csrf) + '&comment_id=' + encodeURIComponent(commentId)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    var el = delBtn.closest('[data-comment-id="' + commentId + '"]');
+                    if (el) el.remove();
+                }
+            })
+            .catch(function() {});
+        }
+
+        // comment submit
+        var submitBtn = e.target.closest('.comment-submit');
+        if (submitBtn) {
+            var form = submitBtn.closest('.comment-form');
+            if (!form) return;
+            var input = form.querySelector('.comment-input');
+            var content = input.value.trim();
+            if (!content) return;
+            var csrf = form.querySelector('.csrf-input').value;
+            var postId = form.querySelector('.post-id-input').value;
+            var container = document.querySelector('.comments-container[data-post-id="' + postId + '"]');
+
+            fetch('./core/post/comments/create_comment.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'csrf_token=' + encodeURIComponent(csrf) + '&post_id=' + encodeURIComponent(postId) + '&content=' + encodeURIComponent(content)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.error || !data.success) return;
+                var div = document.createElement('div');
+                div.className = 'flex items-start gap-2 text-sm group/comment';
+                div.dataset.commentId = data.id;
+                div.innerHTML =
+                    '<img src="' + (data.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') + '" class="w-6 h-6 rounded-full flex-shrink-0 mt-0.5">' +
+                    '<div class="flex-1 min-w-0"><a href="?profile=' + data.user_id + '" class="font-semibold text-xs" style="color: var(--text-primary);">' + data.username + '</a>' +
+                    '<p class="text-sm" style="color: var(--text-primary);">' + data.content.replace(/</g, '&lt;') + '</p></div>' +
+                    '<button class="delete-comment opacity-0 group-hover/comment:opacity-100 transition shrink-0 text-muted hover:text-red-400 text-xs p-1" data-comment-id="' + data.id + '" data-csrf="' + csrf + '"><i class="bi bi-trash"></i></button>';
+                if (container) container.prepend(div);
+                input.value = '';
+            })
+            .catch(function() {});
+        }
+    });
+})();
+</script>
 </body>
 </html>
