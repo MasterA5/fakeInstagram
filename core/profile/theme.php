@@ -20,9 +20,20 @@ if (!in_array($theme, $allowed)) {
     $theme = 'dark';
 }
 
-$stmt = $conn->prepare("UPDATE users SET theme = ? WHERE id = ?");
-$stmt->bind_param("ss", $theme, $_SESSION['user_id']);
+$palette = trim($_POST['palette'] ?? '');
+if (!empty($palette)) {
+    $paletteData = json_decode($palette, true);
+    if (!is_array($paletteData)) {
+        $palette = null;
+    }
+} else {
+    $palette = null;
+}
+
+$stmt = $conn->prepare("UPDATE users SET theme = ?, palette = ? WHERE id = ?");
+$stmt->bind_param("sss", $theme, $palette, $_SESSION['user_id']);
 $stmt->execute();
 
+$_SESSION['theme'] = $theme;
 header("Location: ../../index.php?settings&tab=theme");
 exit;

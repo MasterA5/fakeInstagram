@@ -11,72 +11,90 @@ $followerCount = getFollowerCount($conn, $profileId);
 $followingCount = getFollowingCount($conn, $profileId);
 $isFollow = !$isOwner && isset($_SESSION['user_id']) && isFollowing($conn, $_SESSION['user_id'], $profileId);
 ?>
-<div class="card border rounded-2xl p-6 card-hover shadow-sm animate-slide-up" style="border-color: var(--border);">
-    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-        <div class="relative">
+<div class="px-4 sm:px-0 pt-4 sm:pt-0 animate-slide-up">
+    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-12 mb-6 sm:mb-10">
+        <div class="flex-shrink-0">
             <img src="<?= htmlspecialchars($profileData['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>"
-                 class="w-24 h-24 sm:w-28 sm:h-28 rounded-full ring-4 ring-indigo-500/20">
-            <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-4 border-zinc-900 rounded-full"></div>
+                 class="w-20 h-20 sm:w-[150px] sm:h-[150px] rounded-full ring-4 ring-[var(--accent)]/20" style="object-fit: cover;">
         </div>
 
-        <div class="flex-1 text-center sm:text-left">
-            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                <div>
-                    <h1 class="text-2xl font-bold"><?= htmlspecialchars($profileData['display_name'] ?? $profileData['username']) ?></h1>
-                    <p class="text-sm text-muted">@<?= htmlspecialchars($profileData['username']) ?></p>
+        <div class="flex-1 text-center sm:text-left min-w-0">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+                <h1 class="text-xl sm:text-2xl font-light"><?= htmlspecialchars($profileData['username']) ?></h1>
+                <div class="flex items-center justify-center sm:justify-start gap-2">
+                    <?php if ($isOwner): ?>
+                        <a href="?settings&tab=profile" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition" style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary);">
+                            Editar perfil
+                        </a>
+                    <?php elseif (isset($_SESSION['user_id'])): ?>
+                        <form action="./core/follow/follow.php" method="POST">
+                            <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+                            <input type="hidden" name="followed_id" value="<?= htmlspecialchars($profileId) ?>">
+                            <button type="submit" class="px-6 py-1.5 rounded-lg text-xs font-semibold transition-all <?= $isFollow ? 'bg-transparent border text-muted' : 'text-white shadow-sm' ?>" style="<?= $isFollow ? 'border-color: var(--border); color: var(--text-primary);' : 'background: var(--accent);' ?>">
+                                <?= $isFollow ? 'Siguiendo' : 'Seguir' ?>
+                            </button>
+                        </form>
+                    <?php endif; ?>
                 </div>
-
-                <?php if ($isOwner): ?>
-                    <a href="?settings" class="sm:ml-auto btn-ghost px-4 py-2 rounded-xl text-xs font-medium transition flex items-center gap-1.5 text-muted hover:text-white">
-                        <i class="bi bi-pencil"></i> Editar perfil
-                    </a>
-                <?php elseif (isset($_SESSION['user_id'])): ?>
-                    <form action="./core/follow/follow.php" method="POST" class="sm:ml-auto">
-                        <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
-                        <input type="hidden" name="followed_id" value="<?= htmlspecialchars($profileId) ?>">
-                        <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 <?= $isFollow ? 'btn-ghost text-muted hover:text-white' : 'btn-accent text-white shadow-lg shadow-indigo-500/20' ?>">
-                            <i class="bi <?= $isFollow ? 'bi-person-check' : 'bi-person-plus' ?>"></i>
-                            <?= $isFollow ? 'Siguiendo' : 'Seguir' ?>
-                        </button>
-                    </form>
-                <?php endif; ?>
             </div>
 
-            <?php if (!empty($profileData['bio'])): ?>
-                <p class="text-sm mt-3 leading-relaxed" style="color: var(--text-secondary);"><?= htmlspecialchars($profileData['bio']) ?></p>
+            <div class="flex gap-8 justify-center sm:justify-start mb-4">
+                <div class="text-center sm:text-left">
+                    <span class="font-semibold text-base"><?= $followerCount ?></span>
+                    <span class="text-sm text-muted ml-1">seguidores</span>
+                </div>
+                <div class="text-center sm:text-left">
+                    <span class="font-semibold text-base"><?= $followingCount ?></span>
+                    <span class="text-sm text-muted ml-1">seguidos</span>
+                </div>
+            </div>
+
+            <?php if (!empty($profileData['display_name'])): ?>
+                <p class="font-semibold text-sm mb-0.5"><?= htmlspecialchars($profileData['display_name']) ?></p>
             <?php endif; ?>
-
-            <div class="flex gap-6 mt-4 justify-center sm:justify-start">
-                <div class="text-center sm:text-left">
-                    <span class="text-xl font-bold"><?= $followerCount ?></span>
-                    <span class="text-sm text-muted block">seguidores</span>
-                </div>
-                <div class="text-center sm:text-left">
-                    <span class="text-xl font-bold"><?= $followingCount ?></span>
-                    <span class="text-sm text-muted block">siguiendo</span>
-                </div>
-            </div>
+            <?php if (!empty($profileData['bio'])): ?>
+                <p class="text-sm" style="color: var(--text-primary);"><?= htmlspecialchars($profileData['bio']) ?></p>
+            <?php endif; ?>
         </div>
     </div>
-</div>
 
-<div class="mt-6 space-y-6">
+    <div style="border-top: 1px solid var(--border);">
+        <div class="flex items-center justify-center gap-16 text-xs font-semibold uppercase tracking-wider py-3" style="color: var(--text-secondary);">
+            <span class="flex items-center gap-1.5 py-2" style="border-top: 1px solid var(--text-primary); color: var(--text-primary); margin-top: -1px;">
+                <i class="bi bi-grid-fill text-sm"></i> Publicaciones
+            </span>
+        </div>
+    </div>
+
     <?php
-    $stmt = $conn->prepare("SELECT posts.*, users.username, users.display_name, users.avatar, COUNT(likes.id) AS likes_count FROM posts JOIN users ON posts.user_id = users.id LEFT JOIN likes ON likes.post_id = posts.id WHERE posts.user_id = ? GROUP BY posts.id ORDER BY posts.created_at DESC");
+    $stmt = $conn->prepare("SELECT id, image FROM posts WHERE user_id = ? ORDER BY created_at DESC");
     $stmt->bind_param("s", $profileId);
     $stmt->execute();
     $posts = $stmt->get_result();
+    $hasPosts = $posts->num_rows > 0;
     ?>
-    <?php if ($posts->num_rows === 0): ?>
-        <div class="text-center py-16">
-            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4" style="background: var(--bg-card);">
-                <i class="bi bi-journal-text text-muted"></i>
-            </div>
-            <p class="text-muted text-sm">No hay publicaciones aún</p>
+
+    <?php if ($hasPosts): ?>
+        <div class="profile-grid">
+            <?php while ($p = $posts->fetch_assoc()): ?>
+                <a href="?profile=<?= urlencode($profileId) ?>" class="profile-grid-item card-hover">
+                    <?php if (!empty($p['image'])): ?>
+                        <img src="<?= htmlspecialchars($p['image']) ?>" loading="lazy">
+                    <?php else: ?>
+                        <div class="w-full h-full flex items-center justify-center text-muted text-2xl" style="background: var(--bg-card);">
+                            <i class="bi bi-journal-text"></i>
+                        </div>
+                    <?php endif; ?>
+                </a>
+            <?php endwhile; ?>
         </div>
     <?php else: ?>
-        <?php while ($data = $posts->fetch_assoc()): ?>
-            <?php include("./components/post_card.php"); ?>
-        <?php endwhile; ?>
+        <div class="text-center py-16">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 border-2" style="border-color: var(--border);">
+                <i class="bi bi-camera text-muted"></i>
+            </div>
+            <p class="font-semibold text-lg">No hay publicaciones</p>
+            <p class="text-muted text-sm mt-1">Cuando <?= $isOwner ? 'publiques' : 'el usuario publique' ?> algo, aparecerá aquí.</p>
+        </div>
     <?php endif; ?>
 </div>

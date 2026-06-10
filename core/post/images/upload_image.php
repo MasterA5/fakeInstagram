@@ -1,6 +1,6 @@
 <?php
 
-function uploadImage($file) {
+function uploadImage(array $file) {
     if (empty($file['tmp_name'])) {
         return null; // no hay imagen
     }

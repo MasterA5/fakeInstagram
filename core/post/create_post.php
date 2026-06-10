@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("../db/db.php");
+include("./core/db/db.php");
 include("../extras/generate_uuid.php");
 include("./images/upload_image.php");
 include("../extras/csrf.php");
@@ -14,7 +14,7 @@ $csrf_token = $_POST['csrf_token'] ?? '';
 if (!verifyCsrfToken($csrf_token)) {
     die("Error de validación");
 }
-
+ 
 // obtener datos
 $content = trim($_POST['content'] ?? '');
 

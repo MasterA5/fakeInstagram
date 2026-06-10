@@ -10,6 +10,7 @@ CREATE TABLE users (
     bio TEXT,
     avatar TEXT DEFAULT 'https://api.dicebear.com/7.x/avataaars/svg?seed=default',
     theme VARCHAR(20) DEFAULT 'dark',
+    palette TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -56,3 +57,4 @@ ALTER TABLE users ADD COLUMN display_name VARCHAR(100);
 ALTER TABLE users ADD COLUMN bio TEXT;
 ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
 ALTER TABLE users ADD COLUMN theme VARCHAR(20) DEFAULT 'dark';
+ALTER TABLE users ADD COLUMN palette TEXT;

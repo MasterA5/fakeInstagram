@@ -1,15 +1,18 @@
 <?php
 
 function getUserTheme($conn, $user_id) {
-    $stmt = $conn->prepare("SELECT theme FROM users WHERE id = ?");
+    $stmt = $conn->prepare("SELECT theme, palette FROM users WHERE id = ?");
     $stmt->bind_param("s", $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $user = $result->fetch_assoc();
-    return $user['theme'] ?? 'dark';
+    return [
+        'theme' => $user['theme'] ?? 'dark',
+        'palette' => $user['palette'] ?? null,
+    ];
 }
 
-function applyTheme($theme) {
+function getBaseTheme($theme) {
     $themes = [
         'dark' => [
             '--bg-primary' => '#000000',
@@ -69,11 +72,49 @@ function applyTheme($theme) {
         $theme = 'dark';
     }
 
-    $vars = $themes[$theme];
+    return $themes[$theme];
+}
+
+function applyTheme($themeName, $paletteJson = null) {
+    $vars = getBaseTheme($themeName);
+
+    if ($paletteJson) {
+        $palette = json_decode($paletteJson, true);
+        if (is_array($palette)) {
+            foreach ($palette as $key => $value) {
+                if (isset($vars[$key])) {
+                    $vars[$key] = $value;
+                }
+            }
+            // Recalculate accent-hover if accent changed
+            if (isset($palette['--accent']) && !isset($palette['--accent-hover'])) {
+                $vars['--accent-hover'] = lightenColor($palette['--accent'], 20);
+            }
+        }
+    }
+
     $css = ':root {';
     foreach ($vars as $key => $value) {
         $css .= "$key: $value;";
     }
     $css .= '}';
     return $css;
+}
+
+function lightenColor($hex, $percent) {
+    $hex = ltrim($hex, '#');
+    if (strlen($hex) !== 6) return $hex;
+    $r = min(255, hexdec(substr($hex, 0, 2)) + $percent);
+    $g = min(255, hexdec(substr($hex, 2, 2)) + $percent);
+    $b = min(255, hexdec(substr($hex, 4, 2)) + $percent);
+    return sprintf('#%02x%02x%02x', $r, $g, $b);
+}
+
+function getUserPalette($conn, $user_id) {
+    $stmt = $conn->prepare("SELECT palette FROM users WHERE id = ?");
+    $stmt->bind_param("s", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    return $user['palette'] ?? null;
 }

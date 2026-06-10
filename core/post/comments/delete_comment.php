@@ -1,7 +1,7 @@
 <?php
 session_start();
 include("../../db/db.php");
-include("../../extras/csrf.php");
+include("../../core/extras/csrf.php");
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../../index.php");

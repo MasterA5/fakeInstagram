@@ -20,48 +20,37 @@ if (!empty($search)) {
     }
 }
 ?>
-<div class="max-w-2xl mx-auto space-y-6 animate-slide-up">
-    <div class="text-center mb-2">
-        <h1 class="text-2xl font-bold">Explorar</h1>
-        <p class="text-sm text-muted mt-1">Descubre nuevos usuarios</p>
-    </div>
-
-    <form method="GET" class="relative">
+<div class="px-4 sm:px-0 pt-4 sm:pt-0 space-y-4 animate-slide-up">
+    <form method="GET" class="relative max-w-[600px] mx-auto">
         <input type="hidden" name="explore" value="1">
-        <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted"></i>
-        <input type="text" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Buscar usuarios..."
-            class="w-full px-4 py-3 pl-11 rounded-2xl text-sm transition shadow-sm" style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary);">
+        <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-muted text-sm"></i>
+        <input type="text" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Buscar"
+            class="w-full px-4 py-2.5 pl-10 rounded-lg text-sm transition" style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary);">
         <?php if (!empty($search)): ?>
-            <a href="?explore=1" class="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-white transition">
+            <a href="?explore=1" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-white transition">
                 <i class="bi bi-x-lg text-xs"></i>
             </a>
         <?php endif; ?>
     </form>
 
     <?php if (!empty($search)): ?>
-        <p class="text-sm text-muted">Resultados para "<strong style="color: var(--text-primary);"><?= htmlspecialchars($search) ?></strong>"</p>
+        <p class="text-sm text-muted px-1">Resultados para "<strong style="color: var(--text-primary);"><?= htmlspecialchars($search) ?></strong>"</p>
     <?php endif; ?>
 
     <?php if (empty($users)): ?>
         <div class="text-center py-16">
-            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4" style="background: var(--bg-card);">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 border-2" style="border-color: var(--border);">
                 <i class="bi bi-search text-muted"></i>
             </div>
             <p class="text-muted text-sm">No se encontraron usuarios</p>
         </div>
     <?php else: ?>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             <?php foreach ($users as $u): ?>
-                <a href="?profile=<?= urlencode($u['id']) ?>" class="card border rounded-2xl p-4 card-hover shadow-sm flex items-center gap-4 group" style="border-color: var(--border);">
-                    <img src="<?= htmlspecialchars($u['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-14 h-14 rounded-full ring-2 ring-transparent group-hover:ring-indigo-500/30 transition-all">
-                    <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-sm"><?= htmlspecialchars($u['display_name'] ?? $u['username']) ?></p>
-                        <p class="text-xs text-muted truncate">@<?= htmlspecialchars($u['username']) ?></p>
-                        <?php if (!empty($u['bio'])): ?>
-                            <p class="text-xs text-muted truncate mt-0.5"><?= htmlspecialchars($u['bio']) ?></p>
-                        <?php endif; ?>
-                    </div>
-                    <i class="bi bi-chevron-right text-muted group-hover:text-white transition group-hover:translate-x-0.5 transition-transform"></i>
+                <a href="?profile=<?= urlencode($u['id']) ?>" class="flex flex-col items-center text-center p-4 rounded-xl card-hover transition" style="background: var(--bg-card); border: 1px solid var(--border);">
+                    <img src="<?= htmlspecialchars($u['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-16 h-16 rounded-full mb-2 ring-2 ring-transparent hover:ring-[var(--accent)]/30 transition-all">
+                    <p class="font-semibold text-sm truncate w-full"><?= htmlspecialchars($u['display_name'] ?? $u['username']) ?></p>
+                    <p class="text-xs text-muted truncate w-full">@<?= htmlspecialchars($u['username']) ?></p>
                 </a>
             <?php endforeach; ?>
         </div>
