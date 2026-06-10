@@ -1,5 +1,6 @@
 <?php
 
+// Format datetime
 if (!function_exists('timeAgo')) {
 function timeAgo($datetime) {
     $time = strtotime($datetime);

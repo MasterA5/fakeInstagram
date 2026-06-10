@@ -1,32 +1,32 @@
 <?php
 session_start();
 include("../../db/db.php");
-include("../../core/extras/csrf.php");
+include("../../extras/csrf.php");
+
+header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../../index.php");
+    echo json_encode(['error' => 'No autorizado']);
     exit;
 }
 
 $csrf_token = $_POST['csrf_token'] ?? '';
 if (!verifyCsrfToken($csrf_token)) {
-    die("Error de validación");
+    echo json_encode(['error' => 'Error de validación']);
+    exit;
 }
 
 $user_id = $_SESSION['user_id'];
 $comment_id = $_POST['comment_id'] ?? null;
 
 if (!$comment_id) {
-    die("Error");
+    echo json_encode(['error' => 'Falta comment_id']);
+    exit;
 }
 
-// 🧠 borrar SOLO si es del usuario
-$sql = "DELETE FROM comments WHERE id = ? AND user_id = ?";
-$stmt = $conn->prepare($sql);
+$stmt = $conn->prepare("DELETE FROM comments WHERE id = ? AND user_id = ?");
 $stmt->bind_param("ss", $comment_id, $user_id);
 $stmt->execute();
 
-// volver
-header("Location: ../../../index.php");
+echo json_encode(['success' => true]);
 exit;
-?>
