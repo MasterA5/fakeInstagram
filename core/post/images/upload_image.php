@@ -14,6 +14,23 @@ function uploadImage(array $file) {
         return null;
     }
 
+    $env = parse_ini_file(__DIR__ . '/../../../.env');
+    $apiKey = $env['API_KEY'] ?? '';
+
+    if (!empty($apiKey)) {
+        $imageData = base64_encode(file_get_contents($file['tmp_name']));
+        $ch = curl_init("https://api.imgbb.com/1/upload?key=$apiKey");
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, ['image' => $imageData]);
+        $res = json_decode(curl_exec($ch), true);
+        curl_close($ch);
+        if (!empty($res['data']['url'])) {
+            return $res['data']['url'];
+        }
+    }
+
+    // fallback local
     $ext = match ($mime) {
         'image/jpeg' => 'jpg',
         'image/png'  => 'png',
@@ -25,22 +42,9 @@ function uploadImage(array $file) {
     $filename = bin2hex(random_bytes(16)) . '.' . $ext;
     $dest = __DIR__ . '/../../../uploads/posts/' . $filename;
 
-    if (!move_uploaded_file($file['tmp_name'], $dest)) {
-        // fallback a ImgBB
-        $env = parse_ini_file(__DIR__ . '/../../../.env');
-        $apiKey = $env['API_KEY'] ?? '';
-        if (!empty($apiKey)) {
-            $imageData = base64_encode(file_get_contents($file['tmp_name']));
-            $ch = curl_init("https://api.imgbb.com/1/upload?key=$apiKey");
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, ['image' => $imageData]);
-            $res = json_decode(curl_exec($ch), true);
-            curl_close($ch);
-            return $res['data']['url'] ?? null;
-        }
-        return null;
+    if (move_uploaded_file($file['tmp_name'], $dest)) {
+        return 'uploads/posts/' . $filename;
     }
 
-    return 'uploads/posts/' . $filename;
+    return null;
 }
