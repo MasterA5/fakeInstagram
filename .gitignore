@@ -6,3 +6,5 @@ uploads/avatars/*
 !uploads/avatars/.gitkeep
 uploads/posts/*
 !uploads/posts/.gitkeep
+*.py
+!gen_users_post.py

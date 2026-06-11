@@ -1,0 +1,1 @@
+DELETE FROM users WHERE username != "agus" AND username != "crocraxker";
