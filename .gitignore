@@ -4,3 +4,5 @@ node_modules/
 .vscode/
 uploads/avatars/*
 !uploads/avatars/.gitkeep
+uploads/posts/*
+!uploads/posts/.gitkeep

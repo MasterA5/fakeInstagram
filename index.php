@@ -101,7 +101,7 @@ if (isset($_GET['profile'])) {
                 <?php include("./core/feed/explore.php"); ?>
 
             <?php else: ?>
-                <div class="flex gap-8 justify-center">
+                <div class="flex flex-col items-center xl:flex-row xl:items-start xl:gap-8 xl:justify-center">
                     <div class="w-full max-w-[470px] space-y-4">
                         <?php if ($logged): ?>
                             <?php include("./components/upload_card.php"); ?>

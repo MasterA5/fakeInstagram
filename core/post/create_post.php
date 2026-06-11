@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("./core/db/db.php");
+include("../db/db.php");
 include("../extras/generate_uuid.php");
 include("./images/upload_image.php");
 include("../extras/csrf.php");
