@@ -84,12 +84,20 @@ if (isset($_GET['profile'])) {
         .comment-btn[data-post-id] { cursor: pointer; }
         @keyframes slideUpBottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes fadeInBg { from { opacity: 0; } to { opacity: 1; } }
-        #comments-sheet:not(.hidden) { display: flex; }
-        #comments-sheet-backdrop { animation: fadeInBg 0.2s ease-out; }
-        #comments-sheet-content { animation: slideUpBottom 0.3s ease-out; }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        #comments-sheet-mobile:not(.hidden) { display: flex; }
+        #comments-sheet-desktop:not(.hidden) { display: flex; }
+        #comments-sheet-mobile > .absolute { animation: fadeInBg 0.2s ease-out; }
+        #comments-sheet-mobile > .relative { animation: slideUpBottom 0.3s ease-out; }
+        #comments-sheet-desktop > .absolute { animation: fadeInBg 0.2s ease-out; }
+        #comments-sheet-desktop > .relative { display: none; }
+        @media (min-width: 1280px) {
+            #comments-sheet-desktop:not(.hidden) > .relative { display: flex; animation: scaleIn 0.25s ease-out; }
+        }
         .sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto; }
-        #comments-sheet-list::-webkit-scrollbar { width: 4px; }
-        #comments-sheet-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .sheet-comments-list::-webkit-scrollbar { width: 4px; }
+        .sheet-comments-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .sheet-close-trigger { cursor: pointer; }
     </style>
 </head>
 <body class="min-h-screen bg-[var(--bg-primary)]">
@@ -152,23 +160,51 @@ if (isset($_GET['profile'])) {
             <?php endif; ?>
         </div>
     </nav>
-<!-- Bottom Sheet -->
-<div id="comments-sheet" class="fixed inset-0 z-[60] hidden flex-col justify-end">
-    <div id="comments-sheet-backdrop" class="absolute inset-0 bg-black/60"></div>
-    <div id="comments-sheet-content" class="relative max-h-[85vh] rounded-t-2xl overflow-hidden flex flex-col" style="background: var(--bg-card);">
+<!-- Bottom Sheet (mobile) -->
+<div id="comments-sheet-mobile" class="fixed inset-0 z-[60] hidden xl:hidden">
+    <div class="absolute inset-0 bg-black/60 sheet-close-trigger"></div>
+    <div class="relative mt-auto max-h-[85vh] rounded-t-2xl overflow-hidden flex flex-col" style="background: var(--bg-card);">
         <div class="flex justify-center pt-3 pb-1 shrink-0">
             <div class="sheet-handle"></div>
         </div>
         <div class="flex items-center justify-between px-4 pb-3 shrink-0">
             <p class="font-semibold text-sm">Comentarios</p>
-            <button id="sheet-close-btn" class="text-muted hover:text-white text-lg p-1"><i class="bi bi-x-lg"></i></button>
+            <button class="sheet-close-btn text-muted hover:text-white text-lg p-1"><i class="bi bi-x-lg"></i></button>
         </div>
-        <div id="comments-sheet-list" class="px-4 overflow-y-auto space-y-3 flex-1 min-h-0"></div>
+        <div class="px-4 overflow-y-auto space-y-3 flex-1 min-h-0 sheet-comments-list"></div>
         <div class="comment-form flex items-center gap-2 px-4 py-3 shrink-0" style="border-top: 1px solid var(--border);">
-            <input type="hidden" id="sheet-csrf" class="csrf-input" value="">
-            <input type="hidden" id="sheet-post-id" class="post-id-input" value="">
+            <input type="hidden" class="csrf-input" value="">
+            <input type="hidden" class="post-id-input" value="">
             <input type="text" placeholder="Agrega un comentario..." class="flex-1 bg-transparent text-sm py-1 border-0 focus:outline-none comment-input" style="color: var(--text-primary);" autocomplete="off">
             <button type="button" class="comment-submit text-sm font-semibold transition opacity-60 hover:opacity-100" style="color: var(--accent);">Publicar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Desktop Detail Modal (xl+) -->
+<div id="comments-sheet-desktop" class="fixed inset-0 z-[60] hidden">
+    <div class="absolute inset-0 bg-black/70 sheet-close-trigger"></div>
+    <div class="relative m-auto w-[95vw] max-w-[1000px] h-[85vh] rounded-2xl overflow-hidden" style="background: var(--bg-card);">
+        <!-- Image -->
+        <div class="w-1/2 bg-black flex items-center justify-center min-w-0">
+            <img id="desk-img" class="max-w-full max-h-full object-contain" src="" alt="">
+        </div>
+        <!-- Comments panel -->
+        <div class="w-1/2 flex flex-col">
+            <div class="flex items-center justify-between px-5 py-4 shrink-0" style="border-bottom: 1px solid var(--border);">
+                <div class="flex items-center gap-3">
+                    <img id="desk-avatar" class="w-8 h-8 rounded-full">
+                    <span id="desk-username" class="font-semibold text-sm"></span>
+                </div>
+                <button class="sheet-close-btn text-muted hover:text-white text-lg p-1"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4 sheet-comments-list"></div>
+            <div class="comment-form flex items-center gap-2 px-5 py-4 shrink-0" style="border-top: 1px solid var(--border);">
+                <input type="hidden" class="csrf-input" value="">
+                <input type="hidden" class="post-id-input" value="">
+                <input type="text" placeholder="Agrega un comentario..." class="flex-1 bg-transparent text-sm py-1 border-0 focus:outline-none comment-input" style="color: var(--text-primary);" autocomplete="off">
+                <button type="button" class="comment-submit text-sm font-semibold transition opacity-60 hover:opacity-100" style="color: var(--accent);">Publicar</button>
+            </div>
         </div>
     </div>
 </div>
@@ -274,7 +310,8 @@ function loadComments(postId, listEl, csrf) {
             if (!content) return;
             var csrf = form.querySelector('.csrf-input').value;
             var postId = form.querySelector('.post-id-input').value;
-            var container = document.querySelector('.comments-container[data-post-id="' + postId + '"]');
+            var sheet = form.closest('#comments-sheet-mobile, #comments-sheet-desktop');
+            var list = sheet ? sheet.querySelector('.sheet-comments-list') : null;
 
             fetch('./core/post/comments/create_comment.php', {
                 method: 'POST',
@@ -289,45 +326,54 @@ function loadComments(postId, listEl, csrf) {
                     '<div class="flex-1 min-w-0"><a href="?profile=' + encodeURIComponent(data.user_id) + '" class="font-semibold text-xs" style="color: var(--text-primary);">' + escapeHtml(data.username) + '</a>' +
                     '<p class="text-sm" style="color: var(--text-primary);">' + escapeHtml(data.content) + '</p></div>' +
                     '<button class="delete-comment opacity-0 group-hover/comment:opacity-100 transition shrink-0 text-muted hover:text-red-400 text-xs p-1" data-comment-id="' + data.id + '" data-csrf="' + csrf + '"><i class="bi bi-trash"></i></button>';
-                if (container) {
+                if (list) {
                     var wrapper = document.createElement('div');
                     wrapper.className = 'flex items-start gap-2 text-sm group/comment';
                     wrapper.dataset.commentId = data.id;
                     wrapper.innerHTML = commentHtml;
-                    container.prepend(wrapper);
-                }
-                var sheetList = document.getElementById('comments-sheet-list');
-                if (sheetList && form.closest('#comments-sheet')) {
-                    var sheetWrapper = document.createElement('div');
-                    sheetWrapper.className = 'flex items-start gap-2 text-sm group/comment';
-                    sheetWrapper.dataset.commentId = data.id;
-                    sheetWrapper.innerHTML = commentHtml;
-                    sheetList.insertBefore(sheetWrapper, sheetList.firstChild);
+                    list.prepend(wrapper);
                 }
                 input.value = '';
             })
             .catch(function() {});
         }
 
-        // comment button -> open bottom sheet
+        // comment button -> open comments overlay
         var commentBtn = e.target.closest('.comment-btn');
         if (commentBtn) {
             var postId = commentBtn.dataset.postId;
             var csrf = commentBtn.dataset.csrf;
-            var sheet = document.getElementById('comments-sheet');
-            var list = document.getElementById('comments-sheet-list');
-            document.getElementById('sheet-csrf').value = csrf;
-            document.getElementById('sheet-post-id').value = postId;
-            loadComments(postId, list, csrf);
-            sheet.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            var isDesktop = window.innerWidth >= 1280;
+
+            if (isDesktop) {
+                var sheet = document.getElementById('comments-sheet-desktop');
+                var list = sheet.querySelector('.sheet-comments-list');
+                sheet.querySelector('.csrf-input').value = csrf;
+                sheet.querySelector('.post-id-input').value = postId;
+                document.getElementById('desk-img').src = commentBtn.dataset.image || '';
+                document.getElementById('desk-avatar').src = commentBtn.dataset.authorAvatar;
+                document.getElementById('desk-username').textContent = commentBtn.dataset.authorName;
+                loadComments(postId, list, csrf);
+                sheet.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                var sheet = document.getElementById('comments-sheet-mobile');
+                var list = sheet.querySelector('.sheet-comments-list');
+                sheet.querySelector('.csrf-input').value = csrf;
+                sheet.querySelector('.post-id-input').value = postId;
+                loadComments(postId, list, csrf);
+                sheet.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
             return;
         }
 
-        // close bottom sheet
-        if (e.target.id === 'comments-sheet-backdrop' || e.target.closest('#sheet-close-btn')) {
-            var sheet = document.getElementById('comments-sheet');
-            sheet.classList.add('hidden');
+        // close comments overlay
+        if (e.target.classList.contains('sheet-close-trigger') || e.target.closest('.sheet-close-btn')) {
+            var mobile = document.getElementById('comments-sheet-mobile');
+            var desktop = document.getElementById('comments-sheet-desktop');
+            mobile.classList.add('hidden');
+            desktop.classList.add('hidden');
             document.body.style.overflow = '';
         }
     });
