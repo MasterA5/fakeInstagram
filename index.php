@@ -80,6 +80,16 @@ if (isset($_GET['profile'])) {
         .post-actions button { transition: all 0.2s ease; }
         .like-btn:hover i { transform: scale(1.15); }
         .like-btn.liked i { font-weight: 900; }
+
+        .comment-btn[data-post-id] { cursor: pointer; }
+        @keyframes slideUpBottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes fadeInBg { from { opacity: 0; } to { opacity: 1; } }
+        #comments-sheet:not(.hidden) { display: flex; }
+        #comments-sheet-backdrop { animation: fadeInBg 0.2s ease-out; }
+        #comments-sheet-content { animation: slideUpBottom 0.3s ease-out; }
+        .sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto; }
+        #comments-sheet-list::-webkit-scrollbar { width: 4px; }
+        #comments-sheet-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
     </style>
 </head>
 <body class="min-h-screen bg-[var(--bg-primary)]">
@@ -142,9 +152,64 @@ if (isset($_GET['profile'])) {
             <?php endif; ?>
         </div>
     </nav>
+<!-- Bottom Sheet -->
+<div id="comments-sheet" class="fixed inset-0 z-[60] hidden flex-col justify-end">
+    <div id="comments-sheet-backdrop" class="absolute inset-0 bg-black/60"></div>
+    <div id="comments-sheet-content" class="relative max-h-[85vh] rounded-t-2xl overflow-hidden flex flex-col" style="background: var(--bg-card);">
+        <div class="flex justify-center pt-3 pb-1 shrink-0">
+            <div class="sheet-handle"></div>
+        </div>
+        <div class="flex items-center justify-between px-4 pb-3 shrink-0">
+            <p class="font-semibold text-sm">Comentarios</p>
+            <button id="sheet-close-btn" class="text-muted hover:text-white text-lg p-1"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div id="comments-sheet-list" class="px-4 overflow-y-auto space-y-3 flex-1 min-h-0"></div>
+        <div class="comment-form flex items-center gap-2 px-4 py-3 shrink-0" style="border-top: 1px solid var(--border);">
+            <input type="hidden" id="sheet-csrf" class="csrf-input" value="">
+            <input type="hidden" id="sheet-post-id" class="post-id-input" value="">
+            <input type="text" placeholder="Agrega un comentario..." class="flex-1 bg-transparent text-sm py-1 border-0 focus:outline-none comment-input" style="color: var(--text-primary);" autocomplete="off">
+            <button type="button" class="comment-submit text-sm font-semibold transition opacity-60 hover:opacity-100" style="color: var(--accent);">Publicar</button>
+        </div>
+    </div>
+</div>
+
 <script>
 function toggleEdit(id) { var el = document.getElementById("edit-" + id); if (el) el.classList.toggle("hidden"); }
 function toggleMenu(id) { var el = document.getElementById(id); if (el) el.classList.toggle("hidden"); }
+
+var CURRENT_USER_ID = <?= json_encode($_SESSION['user_id'] ?? null) ?>;
+
+function escapeHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function loadComments(postId, listEl, csrf) {
+    listEl.innerHTML = '<div class="flex justify-center py-8"><div class="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div></div>';
+    fetch('./core/post/comments/get_comments.php?post_id=' + encodeURIComponent(postId))
+        .then(function(r) { return r.json(); })
+        .then(function(comments) {
+            if (!comments || !comments.length) {
+                listEl.innerHTML = '<p class="text-center text-muted text-sm py-8">No hay comentarios. ¡Sé el primero!</p>';
+                return;
+            }
+            var html = '';
+            for (var i = 0; i < comments.length; i++) {
+                var c = comments[i];
+                html += '<div class="flex items-start gap-2 text-sm group/comment" data-comment-id="' + c.id + '">' +
+                    '<img src="' + escapeHtml(c.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') + '" class="w-6 h-6 rounded-full flex-shrink-0 mt-0.5">' +
+                    '<div class="flex-1 min-w-0"><a href="?profile=' + encodeURIComponent(c.user_id) + '" class="font-semibold text-xs" style="color: var(--text-primary);">' + escapeHtml(c.username) + '</a>' +
+                    '<p class="text-sm" style="color: var(--text-primary);">' + escapeHtml(c.content) + '</p></div>';
+                if (CURRENT_USER_ID && c.user_id === CURRENT_USER_ID) {
+                    html += '<button class="delete-comment opacity-0 group-hover/comment:opacity-100 transition shrink-0 text-muted hover:text-red-400 text-xs p-1" data-comment-id="' + c.id + '" data-csrf="' + csrf + '"><i class="bi bi-trash"></i></button>';
+                }
+                html += '</div>';
+            }
+            listEl.innerHTML = html;
+        })
+        .catch(function() {
+            listEl.innerHTML = '<p class="text-center text-muted text-sm py-8">Error al cargar comentarios</p>';
+        });
+}
 
 (function() {
     document.addEventListener('click', function(e) {
@@ -219,18 +284,51 @@ function toggleMenu(id) { var el = document.getElementById(id); if (el) el.class
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.error || !data.success) return;
-                var div = document.createElement('div');
-                div.className = 'flex items-start gap-2 text-sm group/comment';
-                div.dataset.commentId = data.id;
-                div.innerHTML =
-                    '<img src="' + (data.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') + '" class="w-6 h-6 rounded-full flex-shrink-0 mt-0.5">' +
-                    '<div class="flex-1 min-w-0"><a href="?profile=' + data.user_id + '" class="font-semibold text-xs" style="color: var(--text-primary);">' + data.username + '</a>' +
-                    '<p class="text-sm" style="color: var(--text-primary);">' + data.content.replace(/</g, '&lt;') + '</p></div>' +
+                var commentHtml =
+                    '<img src="' + escapeHtml(data.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') + '" class="w-6 h-6 rounded-full flex-shrink-0 mt-0.5">' +
+                    '<div class="flex-1 min-w-0"><a href="?profile=' + encodeURIComponent(data.user_id) + '" class="font-semibold text-xs" style="color: var(--text-primary);">' + escapeHtml(data.username) + '</a>' +
+                    '<p class="text-sm" style="color: var(--text-primary);">' + escapeHtml(data.content) + '</p></div>' +
                     '<button class="delete-comment opacity-0 group-hover/comment:opacity-100 transition shrink-0 text-muted hover:text-red-400 text-xs p-1" data-comment-id="' + data.id + '" data-csrf="' + csrf + '"><i class="bi bi-trash"></i></button>';
-                if (container) container.prepend(div);
+                if (container) {
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'flex items-start gap-2 text-sm group/comment';
+                    wrapper.dataset.commentId = data.id;
+                    wrapper.innerHTML = commentHtml;
+                    container.prepend(wrapper);
+                }
+                var sheetList = document.getElementById('comments-sheet-list');
+                if (sheetList && form.closest('#comments-sheet')) {
+                    var sheetWrapper = document.createElement('div');
+                    sheetWrapper.className = 'flex items-start gap-2 text-sm group/comment';
+                    sheetWrapper.dataset.commentId = data.id;
+                    sheetWrapper.innerHTML = commentHtml;
+                    sheetList.insertBefore(sheetWrapper, sheetList.firstChild);
+                }
                 input.value = '';
             })
             .catch(function() {});
+        }
+
+        // comment button -> open bottom sheet
+        var commentBtn = e.target.closest('.comment-btn');
+        if (commentBtn) {
+            var postId = commentBtn.dataset.postId;
+            var csrf = commentBtn.dataset.csrf;
+            var sheet = document.getElementById('comments-sheet');
+            var list = document.getElementById('comments-sheet-list');
+            document.getElementById('sheet-csrf').value = csrf;
+            document.getElementById('sheet-post-id').value = postId;
+            loadComments(postId, list, csrf);
+            sheet.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            return;
+        }
+
+        // close bottom sheet
+        if (e.target.id === 'comments-sheet-backdrop' || e.target.closest('#sheet-close-btn')) {
+            var sheet = document.getElementById('comments-sheet');
+            sheet.classList.add('hidden');
+            document.body.style.overflow = '';
         }
     });
 })();
