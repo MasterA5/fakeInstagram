@@ -7,6 +7,18 @@ include("./core/profile/view.php");
 
 $logged = isset($_SESSION['user_id']);
 
+// If logged in but user no longer exists in DB → force logout
+if ($logged) {
+    $stmt = $conn->prepare("SELECT 1 FROM users WHERE id = ?");
+    $stmt->bind_param("s", $_SESSION['user_id']);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows === 0) {
+        session_destroy();
+        header("Location: index.php");
+        exit;
+    }
+}
+
 $activeTheme = 'dark';
 $paletteJson = null;
 if ($logged) {
