@@ -16,8 +16,13 @@ if (!verifyCsrfToken($csrf_token)) {
 $follower_id = $_SESSION['user_id'];
 $followed_id = $_POST['followed_id'] ?? null;
 
-if (!$followed_id || $followed_id === $follower_id) {
+if (!$followed_id) {
     header("Location: ../../index.php");
+    exit;
+}
+if ($followed_id === $follower_id) {
+    $_SESSION['error'] = 'No puedes seguirte a ti mismo';
+    header("Location: " . ($_SERVER['HTTP_REFERER'] ?? '../../index.php'));
     exit;
 }
 

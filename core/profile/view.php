@@ -28,6 +28,7 @@ function getFollowingCount($conn, $user_id) {
 }
 
 function isFollowing($conn, $follower_id, $followed_id) {
+    if ($follower_id === $followed_id) return false;
     $stmt = $conn->prepare("SELECT 1 FROM follows WHERE follower_id = ? AND followed_id = ?");
     $stmt->bind_param("ss", $follower_id, $followed_id);
     $stmt->execute();

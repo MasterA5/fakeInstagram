@@ -26,7 +26,7 @@ $isFollow = !$isOwner && isset($_SESSION['user_id']) && isFollowing($conn, $_SES
                         <a href="?settings&tab=profile" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition" style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary);">
                             Editar perfil
                         </a>
-                    <?php elseif (isset($_SESSION['user_id'])): ?>
+                    <?php elseif (isset($_SESSION['user_id']) && $_SESSION['user_id'] !== $profileId): ?>
                         <form action="./core/follow/follow.php" method="POST">
                             <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
                             <input type="hidden" name="followed_id" value="<?= htmlspecialchars($profileId) ?>">
