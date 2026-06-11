@@ -10,7 +10,7 @@ if (!empty($search)) {
 } else {
     $users = [];
     if (isset($_SESSION['user_id'])) {
-        $stmt = $conn->prepare("SELECT id, username, display_name, avatar FROM users WHERE id != ? ORDER BY RAND() LIMIT 12");
+        $stmt = $conn->prepare("SELECT id, username, display_name, avatar FROM users WHERE id != ? ORDER BY RAND() LIMIT 50");
         $stmt->bind_param("s", $_SESSION['user_id']);
         $stmt->execute();
         $users = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

@@ -39,6 +39,11 @@ $q->bind_param("s", $id);
 $q->execute();
 $comment = $q->get_result()->fetch_assoc();
 
+if (!$comment) {
+    echo json_encode(['error' => 'Error al obtener el comentario']);
+    exit;
+}
+
 echo json_encode([
     'success' => true,
     'id' => $comment['id'],

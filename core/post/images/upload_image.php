@@ -8,7 +8,7 @@ function uploadImage(array $file) {
     $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime = finfo_file($finfo, $file['tmp_name']);
-    finfo_close($finfo);
+    // finfo_close($finfo);
 
     if (!in_array($mime, $allowed)) {
         return null;
@@ -24,7 +24,7 @@ function uploadImage(array $file) {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, ['image' => $imageData]);
         $res = json_decode(curl_exec($ch), true);
-        curl_close($ch);
+        // curl_close($ch);
         if (!empty($res['data']['url'])) {
             return $res['data']['url'];
         }

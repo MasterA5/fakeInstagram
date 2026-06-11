@@ -322,8 +322,6 @@ function loadComments(postId, listEl, csrf) {
             if (!content) return;
             var csrf = form.querySelector('.csrf-input').value;
             var postId = form.querySelector('.post-id-input').value;
-            var sheet = form.closest('#comments-sheet-mobile, #comments-sheet-desktop');
-            var list = sheet ? sheet.querySelector('.sheet-comments-list') : null;
 
             fetch('./core/post/comments/create_comment.php', {
                 method: 'POST',
@@ -332,22 +330,26 @@ function loadComments(postId, listEl, csrf) {
             })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                if (data.error || !data.success) return;
-                var commentHtml =
+                if (data.error || !data.success) { console.error('Comment error:', data); return; }
+                // Find the visible overlay and prepend
+                var mob = document.getElementById('comments-sheet-mobile');
+                var desk = document.getElementById('comments-sheet-desktop');
+                var sheet = (!mob.classList.contains('hidden')) ? mob : (!desk.classList.contains('hidden')) ? desk : null;
+                if (!sheet) return;
+                var list = sheet.querySelector('.sheet-comments-list');
+                if (!list) return;
+                var wrapper = document.createElement('div');
+                wrapper.className = 'flex items-start gap-2 text-sm group/comment';
+                wrapper.dataset.commentId = data.id;
+                wrapper.innerHTML =
                     '<img src="' + escapeHtml(data.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') + '" class="w-6 h-6 rounded-full flex-shrink-0 mt-0.5">' +
                     '<div class="flex-1 min-w-0"><a href="?profile=' + encodeURIComponent(data.user_id) + '" class="font-semibold text-xs" style="color: var(--text-primary);">' + escapeHtml(data.username) + '</a>' +
                     '<p class="text-sm" style="color: var(--text-primary);">' + escapeHtml(data.content) + '</p></div>' +
                     '<button class="delete-comment opacity-0 group-hover/comment:opacity-100 transition shrink-0 text-muted hover:text-red-400 text-xs p-1" data-comment-id="' + data.id + '" data-csrf="' + csrf + '"><i class="bi bi-trash"></i></button>';
-                if (list) {
-                    var wrapper = document.createElement('div');
-                    wrapper.className = 'flex items-start gap-2 text-sm group/comment';
-                    wrapper.dataset.commentId = data.id;
-                    wrapper.innerHTML = commentHtml;
-                    list.prepend(wrapper);
-                }
+                list.prepend(wrapper);
                 input.value = '';
             })
-            .catch(function() {});
+            .catch(function(err) { console.error('Comment fetch error:', err); });
         }
 
         // comment button -> open comments overlay
