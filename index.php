@@ -163,7 +163,7 @@ if (isset($_GET['profile'])) {
 <!-- Bottom Sheet (mobile) -->
 <div id="comments-sheet-mobile" class="fixed inset-0 z-[60] hidden xl:hidden">
     <div class="absolute inset-0 bg-black/60 sheet-close-trigger"></div>
-    <div class="relative mt-auto max-h-[85vh] rounded-t-2xl overflow-hidden flex flex-col" style="background: var(--bg-card);">
+    <div class="relative mt-auto w-full max-h-[85vh] rounded-t-2xl overflow-hidden flex flex-col" style="background: var(--bg-card);">
         <div class="flex justify-center pt-3 pb-1 shrink-0">
             <div class="sheet-handle"></div>
         </div>
