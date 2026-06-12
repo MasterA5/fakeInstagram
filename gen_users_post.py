@@ -37,6 +37,48 @@ CAPTIONS = [
     "Just another day in paradise",
 ]
 
+COMMENTS = [
+    "Hermoso! 🔥",
+    "Increíble foto",
+    "Que lugar es ese?",
+    "Me encanta! 😍",
+    "Espectacular",
+    "Que envidia!",
+    "Precioso",
+    "Dónde es esto?",
+    "🤩🤩🤩",
+    "Fuaaaaa",
+    "Que bien se ve",
+    "Necesito ir",
+    "🔥🔥🔥",
+    "😍😍😍",
+    "Increíble!",
+    "Que calidad",
+    "Hermanoooo",
+    "Eso es arte",
+    "Nunca deja de sorprender",
+    "Que onda esto!",
+    "Muy bueno",
+    "Genial!",
+    "Está buenísimo",
+    "Comparte ubicación",
+    "Que pedo",
+    "Jajaja buenísimo",
+    "Tal cual",
+    "Totalmente",
+    "X",
+    "This is amazing!",
+    "Love it! ❤️",
+    "So cool!",
+    "Nice shot!",
+    "Beautiful!",
+    "Wow 😮",
+    "Perfect",
+    "Great vibes",
+    "Awesome!",
+    "Love this",
+]
+
 IMAGES = [
     "https://picsum.photos/seed/{seed}/600/600",
     "https://picsum.photos/seed/{seed}/600/600",
@@ -125,6 +167,20 @@ def generate_users_sql(users):
                 f"('{uuid.uuid4()}', '{post_id}', '{uid}', '{created.strftime('%Y-%m-%d %H:%M:%S')}');"
             )
 
+    # Generate comments (each post gets 0-15 random comments)
+    comments_sql = []
+    for post_id in all_post_ids:
+        num_comments = random.randint(0, 15)
+        if num_comments == 0:
+            continue
+        commenters = random.sample(user_ids, min(num_comments, len(user_ids)))
+        for cmt_uid in commenters:
+            created = random_date(30)
+            comments_sql.append(
+                f"INSERT INTO comments (id, post_id, user_id, content, created_at) VALUES "
+                f"('{uuid.uuid4()}', '{post_id}', '{cmt_uid}', '{esc(random.choice(COMMENTS))}', '{created.strftime('%Y-%m-%d %H:%M:%S')}');"
+            )
+
     with open("users.sql", "w", encoding="utf-8") as f:
         f.write("\n".join(users_sql))
         print(f"  users.sql -> {len(users_sql)} usuarios")
@@ -140,6 +196,10 @@ def generate_users_sql(users):
     with open("likes.sql", "w", encoding="utf-8") as f:
         f.write("\n".join(likes_sql))
         print(f"  likes.sql -> {len(likes_sql)} likes")
+
+    with open("comments.sql", "w", encoding="utf-8") as f:
+        f.write("\n".join(comments_sql))
+        print(f"  comments.sql -> {len(comments_sql)} comments")
 
 
 if __name__ == "__main__":

@@ -382,6 +382,44 @@ function loadComments(postId, listEl, csrf) {
         }
     });
 })();
+
+// Lazy load posts on scroll
+(function() {
+    var feed = document.getElementById('feed-container');
+    if (!feed) return;
+    var loader = document.getElementById('feed-loader');
+    if (!loader) return;
+    var loading = false;
+    var offset = 5;
+    var hasMore = true;
+
+    function loadMore() {
+        if (loading || !hasMore) return;
+        loading = true;
+        loader.classList.remove('hidden');
+        fetch('./core/feed/load_posts.php?offset=' + offset)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.html) {
+                    feed.insertAdjacentHTML('beforeend', data.html);
+                    offset += 5;
+                }
+                hasMore = data.hasMore;
+                loading = false;
+                loader.classList.toggle('hidden', !hasMore);
+            })
+            .catch(function() {
+                loading = false;
+                loader.classList.add('hidden');
+            });
+    }
+
+    window.addEventListener('scroll', function() {
+        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 600) {
+            loadMore();
+        }
+    });
+})();
 </script>
 </body>
 </html>
