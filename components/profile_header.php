@@ -77,7 +77,12 @@ $isFollow = !$isOwner && isset($_SESSION['user_id']) && isFollowing($conn, $_SES
     <?php if ($hasPosts): ?>
         <div class="profile-grid">
             <?php while ($p = $posts->fetch_assoc()): ?>
-                <a href="?profile=<?= urlencode($profileId) ?>" class="profile-grid-item card-hover">
+                <div class="profile-grid-item card-hover profile-post" role="button"
+                     data-post-id="<?= $p['id'] ?>"
+                     data-csrf="<?= generateCsrfToken() ?>"
+                     data-image="<?= htmlspecialchars($p['image'] ?? '') ?>"
+                     data-author-name="<?= htmlspecialchars($profileData['display_name'] ?? $profileData['username']) ?>"
+                     data-author-avatar="<?= htmlspecialchars($profileData['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>">
                     <?php if (!empty($p['image'])): ?>
                         <img src="<?= htmlspecialchars($p['image']) ?>" loading="lazy">
                     <?php else: ?>
@@ -85,7 +90,7 @@ $isFollow = !$isOwner && isset($_SESSION['user_id']) && isFollowing($conn, $_SES
                             <i class="bi bi-journal-text"></i>
                         </div>
                     <?php endif; ?>
-                </a>
+                </div>
             <?php endwhile; ?>
         </div>
     <?php else: ?>

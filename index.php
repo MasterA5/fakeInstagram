@@ -372,6 +372,36 @@ function loadComments(postId, listEl, csrf) {
             return;
         }
 
+        // profile post -> open comments overlay
+        var profilePost = e.target.closest('.profile-post');
+        if (profilePost) {
+            var postId = profilePost.dataset.postId;
+            var csrf = profilePost.dataset.csrf;
+            var isDesktop = window.innerWidth >= 1280;
+
+            if (isDesktop) {
+                var sheet = document.getElementById('comments-sheet-desktop');
+                var list = sheet.querySelector('.sheet-comments-list');
+                sheet.querySelector('.csrf-input').value = csrf;
+                sheet.querySelector('.post-id-input').value = postId;
+                document.getElementById('desk-img').src = profilePost.dataset.image || '';
+                document.getElementById('desk-avatar').src = profilePost.dataset.authorAvatar;
+                document.getElementById('desk-username').textContent = profilePost.dataset.authorName;
+                loadComments(postId, list, csrf);
+                sheet.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                var sheet = document.getElementById('comments-sheet-mobile');
+                var list = sheet.querySelector('.sheet-comments-list');
+                sheet.querySelector('.csrf-input').value = csrf;
+                sheet.querySelector('.post-id-input').value = postId;
+                loadComments(postId, list, csrf);
+                sheet.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            return;
+        }
+
         // close comments overlay
         if (e.target.classList.contains('sheet-close-trigger') || e.target.closest('.sheet-close-btn')) {
             var mobile = document.getElementById('comments-sheet-mobile');
