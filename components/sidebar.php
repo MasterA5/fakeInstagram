@@ -21,9 +21,4 @@
             </div>
         <?php endif; ?>
     <?php endif; ?>
-
-    <div class="text-[11px] text-muted leading-relaxed space-y-1">
-        <p class="font-semibold">&copy; 2026 FakeSocial</p>
-        <p>Hecho con ❤️</p>
-    </div>
 </div>
