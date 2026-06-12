@@ -35,6 +35,8 @@ if (isset($_GET['profile'])) {
     $page = 'settings';
 } elseif (isset($_GET['explore'])) {
     $page = 'explore';
+} elseif (isset($_GET['post'])) {
+    $page = 'post';
 }
 ?>
 <!DOCTYPE html>
@@ -129,6 +131,9 @@ if (isset($_GET['profile'])) {
 
             <?php elseif ($page === 'explore'): ?>
                 <?php include("./core/feed/explore.php"); ?>
+
+            <?php elseif ($page === 'post'): ?>
+                <?php include("./core/post/view.php"); ?>
 
             <?php else: ?>
                 <div class="flex flex-col items-center xl:flex-row xl:items-start xl:gap-8 xl:justify-center">
@@ -357,36 +362,6 @@ function loadComments(postId, listEl, csrf) {
                 document.getElementById('desk-img').src = commentBtn.dataset.image || '';
                 document.getElementById('desk-avatar').src = commentBtn.dataset.authorAvatar;
                 document.getElementById('desk-username').textContent = commentBtn.dataset.authorName;
-                loadComments(postId, list, csrf);
-                sheet.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            } else {
-                var sheet = document.getElementById('comments-sheet-mobile');
-                var list = sheet.querySelector('.sheet-comments-list');
-                sheet.querySelector('.csrf-input').value = csrf;
-                sheet.querySelector('.post-id-input').value = postId;
-                loadComments(postId, list, csrf);
-                sheet.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            }
-            return;
-        }
-
-        // profile post -> open comments overlay
-        var profilePost = e.target.closest('.profile-post');
-        if (profilePost) {
-            var postId = profilePost.dataset.postId;
-            var csrf = profilePost.dataset.csrf;
-            var isDesktop = window.innerWidth >= 1280;
-
-            if (isDesktop) {
-                var sheet = document.getElementById('comments-sheet-desktop');
-                var list = sheet.querySelector('.sheet-comments-list');
-                sheet.querySelector('.csrf-input').value = csrf;
-                sheet.querySelector('.post-id-input').value = postId;
-                document.getElementById('desk-img').src = profilePost.dataset.image || '';
-                document.getElementById('desk-avatar').src = profilePost.dataset.authorAvatar;
-                document.getElementById('desk-username').textContent = profilePost.dataset.authorName;
                 loadComments(postId, list, csrf);
                 sheet.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
