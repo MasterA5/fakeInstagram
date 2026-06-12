@@ -48,7 +48,7 @@ if (!empty($search)) {
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             <?php foreach ($users as $u): ?>
                 <a href="?profile=<?= urlencode($u['id']) ?>" class="flex flex-col items-center text-center p-4 rounded-xl card-hover transition" style="background: var(--bg-card); border: 1px solid var(--border);">
-                    <img src="<?= htmlspecialchars($u['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-16 h-16 rounded-full mb-2 ring-2 ring-transparent hover:ring-[var(--accent)]/30 transition-all">
+                    <img src="<?= htmlspecialchars($u['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-16 h-16 rounded-full mb-2 ring-2 ring-transparent hover:ring-[var(--accent)]/30 transition-all object-cover">
                     <p class="font-semibold text-sm truncate w-full"><?= htmlspecialchars($u['display_name'] ?? $u['username']) ?></p>
                     <p class="text-xs text-muted truncate w-full">@<?= htmlspecialchars($u['username']) ?></p>
                 </a>

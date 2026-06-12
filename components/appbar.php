@@ -23,7 +23,7 @@
         <div class="flex items-center gap-3">
             <?php if ($logged): ?>
                 <a href="?profile=<?= urlencode($_SESSION['user_id']) ?>" class="transition-transform hover:scale-105">
-                    <img src="<?= htmlspecialchars($_SESSION['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-7 h-7 rounded-full ring-2 ring-transparent hover:ring-[var(--accent)] transition-all">
+                    <img src="<?= htmlspecialchars($_SESSION['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-7 h-7 rounded-full ring-2 ring-transparent hover:ring-[var(--accent)] transition-all object-cover">
                 </a>
                 <a href="./core/auth/logout.php" class="text-muted hover:text-red-400 transition text-sm flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-card-hover)]">
                     <i class="bi bi-box-arrow-right"></i>

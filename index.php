@@ -210,7 +210,7 @@ if (isset($_GET['profile'])) {
         <div class="w-1/2 flex flex-col">
             <div class="flex items-center justify-between px-5 py-4 shrink-0" style="border-bottom: 1px solid var(--border);">
                 <div class="flex items-center gap-3">
-                    <img id="desk-avatar" class="w-8 h-8 rounded-full">
+                    <img id="desk-avatar" class="w-8 h-8 rounded-full object-cover">
                     <span id="desk-username" class="font-semibold text-sm"></span>
                 </div>
                 <button class="sheet-close-btn text-muted hover:text-white text-lg p-1"><i class="bi bi-x-lg"></i></button>
@@ -249,7 +249,7 @@ function loadComments(postId, listEl, csrf) {
             for (var i = 0; i < comments.length; i++) {
                 var c = comments[i];
                 html += '<div class="flex items-start gap-2 text-sm group/comment" data-comment-id="' + c.id + '">' +
-                    '<img src="' + escapeHtml(c.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') + '" class="w-6 h-6 rounded-full flex-shrink-0 mt-0.5">' +
+                    '<img src="' + escapeHtml(c.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') + '" class="w-6 h-6 rounded-full flex-shrink-0 mt-0.5 object-cover">' +
                     '<div class="flex-1 min-w-0"><a href="?profile=' + encodeURIComponent(c.user_id) + '" class="font-semibold text-xs" style="color: var(--text-primary);">' + escapeHtml(c.username) + '</a>' +
                     '<p class="text-sm" style="color: var(--text-primary);">' + escapeHtml(c.content) + '</p></div>';
                 if (CURRENT_USER_ID && c.user_id === CURRENT_USER_ID) {

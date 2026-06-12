@@ -3,7 +3,7 @@
     <div class="p-3 sm:p-4">
         <div class="flex items-center justify-between mb-3">
             <a href="?profile=<?= urlencode($data['user_id']) ?>" class="flex items-center gap-3 group">
-                <img src="<?= htmlspecialchars($data['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-8 h-8 rounded-full ring-2 ring-transparent group-hover:ring-[var(--accent)]/50 transition-all">
+                <img src="<?= htmlspecialchars($data['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-8 h-8 rounded-full ring-2 ring-transparent group-hover:ring-[var(--accent)]/50 transition-all object-cover">
                 <div>
                     <p class="font-semibold text-sm" style="color: var(--text-primary);"><?= htmlspecialchars($data['display_name'] ?? $data['username']) ?></p>
                     <p class="text-[11px] text-muted">@<?= htmlspecialchars($data['username']) ?></p>

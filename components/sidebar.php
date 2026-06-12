@@ -9,7 +9,7 @@
                 <div class="space-y-2">
                     <?php foreach ($suggested as $u): ?>
                         <a href="?profile=<?= urlencode($u['id']) ?>" class="flex items-center gap-3 group p-1.5 -mx-1.5 rounded-lg hover:bg-[var(--bg-card-hover)] transition">
-                            <img src="<?= htmlspecialchars($u['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-8 h-8 rounded-full ring-2 ring-transparent group-hover:ring-[var(--accent)]/30 transition-all">
+                            <img src="<?= htmlspecialchars($u['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-8 h-8 rounded-full ring-2 ring-transparent group-hover:ring-[var(--accent)]/30 transition-all object-cover">
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-semibold truncate"><?= htmlspecialchars($u['display_name'] ?? $u['username']) ?></p>
                                 <p class="text-[11px] text-muted truncate">@<?= htmlspecialchars($u['username']) ?></p>

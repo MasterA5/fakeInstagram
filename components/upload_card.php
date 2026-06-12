@@ -3,7 +3,7 @@
 
     <div class="card border rounded-xl p-4 mb-4 shadow-sm" style="border-color: var(--border);">
         <div class="flex gap-3">
-            <img src="<?= htmlspecialchars($_SESSION['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-8 h-8 rounded-full flex-shrink-0">
+            <img src="<?= htmlspecialchars($_SESSION['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-8 h-8 rounded-full flex-shrink-0 object-cover">
             <textarea name="content" placeholder="¿Qué está pasando?" rows="1" class="flex-1 bg-transparent text-sm resize-none focus:outline-none py-1" style="color: var(--text-primary);"></textarea>
         </div>
 
