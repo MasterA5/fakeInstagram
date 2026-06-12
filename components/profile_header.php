@@ -27,7 +27,7 @@ $isFollow = !$isOwner && isset($_SESSION['user_id']) && isFollowing($conn, $_SES
                             Editar perfil
                         </a>
                     <?php elseif (isset($_SESSION['user_id']) && $_SESSION['user_id'] !== $profileId): ?>
-                        <button class="follow-btn px-6 py-1.5 rounded-lg text-xs font-semibold transition-all <?= $isFollow ? 'bg-transparent border text-muted' : 'text-white shadow-sm' ?>" data-followed-id="<?= htmlspecialchars($profileId) ?>" data-csrf="<?= generateCsrfToken() ?>" data-following="<?= $isFollow ? '1' : '0' ?>" data-follower-count="<?= $followerCount ?>" style="<?= $isFollow ? 'border-color: var(--border); color: var(--text-primary);' : 'background: var(--accent);' ?>">
+                        <button class="follow-btn px-6 py-1.5 rounded-lg text-xs font-semibold transition-all <?= $isFollow ? 'bg-transparent border text-muted' : 'text-white shadow-sm' ?>" data-followed-id="<?= htmlspecialchars($profileId) ?>" data-csrf="<?= generateCsrfToken() ?>" data-following="<?= $isFollow ? '1' : '0' ?>" style="<?= $isFollow ? 'border-color: var(--border); color: var(--text-primary);' : 'background: var(--accent);' ?>">
                             <?= $isFollow ? 'Siguiendo' : 'Seguir' ?>
                         </button>
                     <?php endif; ?>
