@@ -385,8 +385,157 @@ function loadComments(postId, listEl, csrf) {
             desktop.classList.add('hidden');
             document.body.style.overflow = '';
         }
+
+        // follow/unfollow
+        var followBtn = e.target.closest('.follow-btn');
+        if (followBtn) {
+            var fid = followBtn.dataset.followedId;
+            var cs = followBtn.dataset.csrf;
+            fetch('./core/follow/follow.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'csrf_token=' + encodeURIComponent(cs) + '&followed_id=' + encodeURIComponent(fid)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.error) return;
+                var following = data.following;
+                followBtn.dataset.following = following ? '1' : '0';
+                followBtn.textContent = following ? 'Siguiendo' : 'Seguir';
+                if (following) {
+                    followBtn.className = 'follow-btn px-6 py-1.5 rounded-lg text-xs font-semibold transition-all bg-transparent border text-muted';
+                    followBtn.style.cssText = 'border-color: var(--border); color: var(--text-primary);';
+                } else {
+                    followBtn.className = 'follow-btn px-6 py-1.5 rounded-lg text-xs font-semibold transition-all text-white shadow-sm';
+                    followBtn.style.cssText = 'background: var(--accent);';
+                }
+                var fc = document.querySelector('[data-follower-count]');
+                if (fc) fc.textContent = data.follower_count;
+            })
+            .catch(function() {});
+            return;
+        }
+
+        // delete post
+        var delPostBtn = e.target.closest('.delete-post-btn');
+        if (delPostBtn) {
+            if (!confirm('¿Eliminar post?')) return;
+            var pid = delPostBtn.dataset.postId;
+            var cs = delPostBtn.dataset.csrf;
+            fetch('./core/post/delete_post.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'csrf_token=' + encodeURIComponent(cs) + '&post_id=' + encodeURIComponent(pid)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    var card = delPostBtn.closest('.card');
+                    if (card) card.remove();
+                }
+            })
+            .catch(function() {});
+            return;
+        }
     });
 })();
+
+// Upload post with AJAX
+(function() {
+    var form = document.getElementById('upload-form');
+    if (!form) return;
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var btn = form.querySelector('button[type="submit"]');
+        var original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>';
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.error) { console.error(data.error); return; }
+            if (data.html) {
+                var feed = document.getElementById('feed-container');
+                if (feed) {
+                    if (!feed.querySelector('.card')) {
+                        feed.innerHTML = data.html;
+                    } else {
+                        feed.insertAdjacentHTML('afterbegin', data.html);
+                    }
+                }
+            }
+            form.reset();
+            var prev = document.getElementById('preview');
+            if (prev) prev.classList.add('hidden');
+        })
+        .catch(function(err) { console.error('Upload error:', err); })
+        .finally(function() {
+            btn.disabled = false;
+            btn.innerHTML = original;
+        });
+    });
+})();
+
+// Edit post with AJAX (delegated)
+document.addEventListener('submit', function(e) {
+    var editForm = e.target.closest('.edit-post-form');
+    if (!editForm) return;
+    e.preventDefault();
+    var card = editForm.closest('.card');
+    if (!card) return;
+    var btn = editForm.querySelector('button[type="submit"]');
+    var original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<div class="w-4 h-4 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto"></div>';
+    fetch(editForm.action, {
+        method: 'POST',
+        body: new FormData(editForm)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.error) { console.error(data.error); return; }
+        var contentP = card.querySelector('p.text-sm.leading-relaxed');
+        if (contentP) {
+            var nameSpan = contentP.querySelector('span.font-semibold');
+            if (nameSpan) {
+                contentP.innerHTML = nameSpan.outerHTML + ' ' + escapeHtml(editForm.querySelector('[name="content"]').value);
+            }
+        }
+        if (data.image_url) {
+            var postImg = card.querySelector('img[style*="max-height"]');
+            if (postImg) {
+                postImg.src = data.image_url;
+            } else {
+                var imgContainer = card.querySelector('div.-mx-3');
+                if (!imgContainer) {
+                    var newContainer = document.createElement('div');
+                    newContainer.className = '-mx-3 sm:-mx-4 mb-3';
+                    newContainer.style.cssText = 'background: #000;';
+                    var newImg = document.createElement('img');
+                    newImg.className = 'w-full';
+                    newImg.style.cssText = 'max-height: 585px; object-fit: contain;';
+                    newImg.loading = 'lazy';
+                    newImg.src = data.image_url;
+                    newContainer.appendChild(newImg);
+                    var actions = card.querySelector('.post-actions');
+                    if (actions) {
+                        card.insertBefore(newContainer, actions);
+                    }
+                }
+            }
+        }
+        var editBox = editForm.closest('[id^="edit-"]');
+        if (editBox) editBox.classList.add('hidden');
+    })
+    .catch(function(err) { console.error('Edit error:', err); })
+    .finally(function() {
+        btn.disabled = false;
+        btn.innerHTML = original;
+    });
+});
 
 // Lazy load posts on scroll
 (function() {

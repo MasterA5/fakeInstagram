@@ -27,20 +27,16 @@ $isFollow = !$isOwner && isset($_SESSION['user_id']) && isFollowing($conn, $_SES
                             Editar perfil
                         </a>
                     <?php elseif (isset($_SESSION['user_id']) && $_SESSION['user_id'] !== $profileId): ?>
-                        <form action="./core/follow/follow.php" method="POST">
-                            <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
-                            <input type="hidden" name="followed_id" value="<?= htmlspecialchars($profileId) ?>">
-                            <button type="submit" class="px-6 py-1.5 rounded-lg text-xs font-semibold transition-all <?= $isFollow ? 'bg-transparent border text-muted' : 'text-white shadow-sm' ?>" style="<?= $isFollow ? 'border-color: var(--border); color: var(--text-primary);' : 'background: var(--accent);' ?>">
-                                <?= $isFollow ? 'Siguiendo' : 'Seguir' ?>
-                            </button>
-                        </form>
+                        <button class="follow-btn px-6 py-1.5 rounded-lg text-xs font-semibold transition-all <?= $isFollow ? 'bg-transparent border text-muted' : 'text-white shadow-sm' ?>" data-followed-id="<?= htmlspecialchars($profileId) ?>" data-csrf="<?= generateCsrfToken() ?>" data-following="<?= $isFollow ? '1' : '0' ?>" data-follower-count="<?= $followerCount ?>" style="<?= $isFollow ? 'border-color: var(--border); color: var(--text-primary);' : 'background: var(--accent);' ?>">
+                            <?= $isFollow ? 'Siguiendo' : 'Seguir' ?>
+                        </button>
                     <?php endif; ?>
                 </div>
             </div>
 
             <div class="flex gap-8 justify-center sm:justify-start mb-4">
                 <div class="text-center sm:text-left">
-                    <span class="font-semibold text-base"><?= $followerCount ?></span>
+                    <span class="font-semibold text-base" data-follower-count><?= $followerCount ?></span>
                     <span class="text-sm text-muted ml-1">seguidores</span>
                 </div>
                 <div class="text-center sm:text-left">

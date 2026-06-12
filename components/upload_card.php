@@ -1,4 +1,4 @@
-<form action="./core/post/create_post.php" method="POST" enctype="multipart/form-data">
+<form id="upload-form" action="./core/post/create_post.php" method="POST" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
 
     <div class="card border rounded-xl p-4 mb-4 shadow-sm" style="border-color: var(--border);">

@@ -5,43 +5,53 @@ include("../extras/generate_uuid.php");
 include("./images/upload_image.php");
 include("../extras/csrf.php");
 
+header('Content-Type: application/json');
+
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../../index.php");
+    echo json_encode(['error' => 'No autenticado']);
     exit;
 }
 
 $csrf_token = $_POST['csrf_token'] ?? '';
 if (!verifyCsrfToken($csrf_token)) {
-    die("Error de validación");
+    echo json_encode(['error' => 'Error de validación']);
+    exit;
 }
- 
-// obtener datos
+
 $content = trim($_POST['content'] ?? '');
 
-// validar
 if (empty($content)) {
-    die("Post vacío");
+    echo json_encode(['error' => 'Post vacío']);
+    exit;
 }
 
 if (strlen($content) > 2000) {
-    die("El contenido es demasiado largo");
+    echo json_encode(['error' => 'El contenido es demasiado largo']);
+    exit;
 }
 
-// obtener usuario desde sesión
 $user_id = $_SESSION['user_id'];
-
-// 🔥 subir imagen
 $imageUrl = uploadImage($_FILES['image'] ?? []);
-
 $id = generateUUID();
 
-// insertar
 $sql = "INSERT INTO posts (id, user_id, image, content) VALUES (?, ?, ?, ?)";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ssss", $id, $user_id, $imageUrl, $content);
 $stmt->execute();
 
-// redirigir
-header("Location: ../../index.php");
+// Fetch the created post with user data to render card HTML
+$query = $conn->prepare("SELECT posts.*, users.username, users.display_name, users.avatar,
+                          0 AS likes_count, 0 AS is_liked
+                          FROM posts
+                          JOIN users ON posts.user_id = users.id
+                          WHERE posts.id = ?");
+$query->bind_param("s", $id);
+$query->execute();
+$data = $query->get_result()->fetch_assoc();
+
+ob_start();
+include("../../components/post_card.php");
+$html = ob_get_clean();
+
+echo json_encode(['success' => true, 'post_id' => $id, 'html' => $html]);
 exit;
-?>

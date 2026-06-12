@@ -19,13 +19,9 @@
                         <button onclick="toggleEdit('<?= $data['id'] ?>')" class="w-full text-left px-3 py-2.5 text-sm hover:bg-[var(--bg-card-hover)] flex items-center gap-2 transition" style="color: #eab308;">
                             <i class="bi bi-pencil text-xs"></i> Editar
                         </button>
-                        <form action="./core/post/delete_post.php" method="POST">
-                            <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
-                            <input type="hidden" name="post_id" value="<?= $data['id'] ?>">
-                            <button onclick="return confirm('¿Eliminar post?')" class="w-full text-left px-3 py-2.5 text-sm hover:bg-[var(--bg-card-hover)] flex items-center gap-2 transition" style="color: #ef4444;">
-                                <i class="bi bi-trash text-xs"></i> Eliminar
-                            </button>
-                        </form>
+                        <button class="delete-post-btn w-full text-left px-3 py-2.5 text-sm hover:bg-[var(--bg-card-hover)] flex items-center gap-2 transition" style="color: #ef4444;" data-post-id="<?= $data['id'] ?>" data-csrf="<?= generateCsrfToken() ?>">
+                            <i class="bi bi-trash text-xs"></i> Eliminar
+                        </button>
                     </div>
                 </div>
             <?php endif; ?>
@@ -60,7 +56,7 @@
         </div>
 
         <div id="edit-<?= $data['id'] ?>" class="hidden mt-3 p-3 rounded-xl animate-fade-in" style="background: var(--bg-primary);">
-            <form action="./core/post/edit_post.php" method="POST" enctype="multipart/form-data">
+            <form class="edit-post-form" action="./core/post/edit_post.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
                 <input type="hidden" name="post_id" value="<?= $data['id'] ?>">
                 <textarea name="content" rows="2" class="w-full px-3 py-2 rounded-xl text-sm transition mb-2" style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary);"><?= htmlspecialchars($data['content']) ?></textarea>

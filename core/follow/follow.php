@@ -3,26 +3,28 @@ session_start();
 include("../db/db.php");
 include("../extras/csrf.php");
 
+header('Content-Type: application/json');
+
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../../index.php");
+    echo json_encode(['error' => 'No autenticado']);
     exit;
 }
 
 $csrf_token = $_POST['csrf_token'] ?? '';
 if (!verifyCsrfToken($csrf_token)) {
-    die("Error de validación");
+    echo json_encode(['error' => 'Error de validación']);
+    exit;
 }
 
 $follower_id = $_SESSION['user_id'];
 $followed_id = $_POST['followed_id'] ?? null;
 
 if (!$followed_id) {
-    header("Location: ../../index.php");
+    echo json_encode(['error' => 'ID no válido']);
     exit;
 }
 if ($followed_id === $follower_id) {
-    $_SESSION['error'] = 'No puedes seguirte a ti mismo';
-    header("Location: " . ($_SERVER['HTTP_REFERER'] ?? '../../index.php'));
+    echo json_encode(['error' => 'No puedes seguirte a ti mismo']);
     exit;
 }
 
@@ -30,7 +32,9 @@ $check = $conn->prepare("SELECT 1 FROM follows WHERE follower_id = ? AND followe
 $check->bind_param("ss", $follower_id, $followed_id);
 $check->execute();
 
-if ($check->get_result()->num_rows > 0) {
+$isFollowing = $check->get_result()->num_rows > 0;
+
+if ($isFollowing) {
     $stmt = $conn->prepare("DELETE FROM follows WHERE follower_id = ? AND followed_id = ?");
     $stmt->bind_param("ss", $follower_id, $followed_id);
     $stmt->execute();
@@ -40,8 +44,13 @@ if ($check->get_result()->num_rows > 0) {
     $stmt->execute();
 }
 
-$referer = $_SERVER['HTTP_REFERER'] ?? '';
-$host = $_SERVER['HTTP_HOST'] ?? '';
-$allowed = $host && strpos($referer, $host) !== false;
-header("Location: " . ($allowed ? $referer : '../../index.php'));
+$count = $conn->prepare("SELECT COUNT(*) AS cnt FROM follows WHERE followed_id = ?");
+$count->bind_param("s", $followed_id);
+$count->execute();
+$followerCount = $count->get_result()->fetch_assoc()['cnt'];
+
+echo json_encode([
+    'following' => !$isFollowing,
+    'follower_count' => (int)$followerCount
+]);
 exit;
