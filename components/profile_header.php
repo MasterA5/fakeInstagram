@@ -1,4 +1,6 @@
 <?php
+include_once './core/db/db.php';
+
 $profileId = $_GET['profile'] ?? '';
 $profileData = getProfile($conn, $profileId);
 if (!$profileData) {
