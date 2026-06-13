@@ -41,6 +41,12 @@ if (!in_array($mode, $allowed)) {
                         <input type="email" name="email" required placeholder="Email" class="w-full px-3 py-2.5 rounded-lg text-sm transition" style="background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary);">
                     </div>
                 <?php endif; ?>
+                
+                <?php if ($mode === 'register'): ?>
+                    <div>
+                        <input type="text" name="display_name" required placeholder="Nombre Completo" class="w-full px-3 py-2.5 rounded-lg text-sm transition" style="background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary);">
+                    </div>
+                <?php endif; ?>
 
                 <div>
                     <input type="password" name="password" required placeholder="Contraseña" class="w-full px-3 py-2.5 rounded-lg text-sm transition" style="background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary);">

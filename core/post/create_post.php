@@ -21,7 +21,7 @@ if (!verifyCsrfToken($csrf_token)) {
 $content = trim($_POST['content'] ?? '');
 
 if (empty($content)) {
-    echo json_encode(['error' => 'Post vacío']);
+    echo json_encode(['error' => 'Contenido vacío']);
     exit;
 }
 
@@ -33,13 +33,28 @@ if (strlen($content) > 2000) {
 $user_id = $_SESSION['user_id'];
 $imageUrl = uploadImage($_FILES['image'] ?? []);
 $id = generateUUID();
+$isStory = isset($_POST['is_story']) && $_POST['is_story'] === '1';
 
+if ($isStory) {
+    $env = parse_ini_file(__DIR__ . '/../../.env');
+    $historyHours = isset($env['HISTORY_TIME']) ? max(1, (int)$env['HISTORY_TIME']) : 24;
+    $expiresAt = date('Y-m-d H:i:s', strtotime("+$historyHours hours"));
+
+    $sql = "INSERT INTO stories (id, user_id, image, content, created_at, expires_at) VALUES (?, ?, ?, ?, NOW(), ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("sssss", $id, $user_id, $imageUrl, $content, $expiresAt);
+    $stmt->execute();
+
+    echo json_encode(['success' => true, 'story_id' => $id, 'is_story' => true]);
+    exit;
+}
+
+// Regular post
 $sql = "INSERT INTO posts (id, user_id, image, content) VALUES (?, ?, ?, ?)";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ssss", $id, $user_id, $imageUrl, $content);
 $stmt->execute();
 
-// Fetch the created post with user data to render card HTML
 $query = $conn->prepare("SELECT posts.*, users.username, users.display_name, users.avatar,
                           0 AS likes_count, 0 AS is_liked
                           FROM posts

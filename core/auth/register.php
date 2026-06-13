@@ -24,6 +24,7 @@ if (!verifyCsrfToken($csrf_token)) {
 $username = trim($_POST['username'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
+$display_name = $_POST['display_name'] ?? '';
 $password_confirm = $_POST['password_confirm'] ?? '';
 
 // Validación del usuario
@@ -59,9 +60,9 @@ $id = generateUUID();
 $avatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' . urlencode($username);
 
 // Insertar al usuario
-$sql = "INSERT INTO users (id, username, email, password, avatar) VALUES (?, ?, ?, ?, ?)";
+$sql = "INSERT INTO users (id, username, email, password, avatar, display_name) VALUES (?, ?, ?, ?, ?, ?)";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sssss", $id, $username, $email, $hash, $avatar);
+$stmt->bind_param("ssssss", $id, $username, $email, $hash, $avatar, $display_name);
 
 if ($stmt->execute()) {
 

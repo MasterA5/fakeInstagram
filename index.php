@@ -138,9 +138,10 @@ if (isset($_GET['profile'])) {
             <?php else: ?>
                 <div class="flex flex-col items-center xl:flex-row xl:items-start xl:gap-8 xl:justify-center">
                     <div class="w-full max-w-[470px] space-y-4">
-                        <?php if ($logged): ?>
-                            <?php include("./components/upload_card.php"); ?>
-                            <?php include("./core/feed/test.php"); ?>
+                            <?php if ($logged): ?>
+                                <?php include("./components/stories_bar.php"); ?>
+                                <?php include("./components/upload_card.php"); ?>
+                                <?php include("./core/feed/test.php"); ?>
                         <?php else: ?>
                             <?php include("./core/forms/forms.php"); ?>
                         <?php endif; ?>
@@ -226,6 +227,31 @@ if (isset($_GET['profile'])) {
     </div>
 </div>
 
+<!-- Story Viewer Overlay -->
+<div id="story-viewer" class="fixed inset-0 z-[70] hidden">
+    <div class="absolute inset-0 bg-black/80 story-close-trigger"></div>
+    <div class="relative m-auto w-full max-w-[420px] h-full sm:h-auto sm:max-h-[90vh] sm:rounded-2xl overflow-hidden" style="background: #000;">
+        <div class="flex items-center justify-between px-4 py-3 absolute top-0 left-0 right-0 z-10" style="background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent);">
+            <div class="flex items-center gap-3">
+                <img id="story-avatar" class="w-8 h-8 rounded-full object-cover ring-2 ring-white/30">
+                <div>
+                    <p id="story-username" class="font-semibold text-sm text-white"></p>
+                </div>
+            </div>
+            <button class="story-close-btn text-white/80 hover:text-white text-lg p-1"><i class="bi bi-x-lg"></i></button>
+        </div>
+
+        <div class="h-full flex flex-col items-center justify-center px-6">
+            <img id="story-image" class="max-w-full max-h-[70vh] object-contain rounded-lg" style="display: none;">
+            <p id="story-text" class="text-white text-lg text-center mt-4" style="display: none;"></p>
+        </div>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4" style="background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent);">
+            <p id="story-expires" class="text-white/60 text-xs text-center"></p>
+        </div>
+    </div>
+</div>
+
 <script>
 function toggleEdit(id) { var el = document.getElementById("edit-" + id); if (el) el.classList.toggle("hidden"); }
 function toggleMenu(id) { var el = document.getElementById(id); if (el) el.classList.toggle("hidden"); }
@@ -234,6 +260,17 @@ var CURRENT_USER_ID = <?= json_encode($_SESSION['user_id'] ?? null) ?>;
 
 function escapeHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function refreshStoriesBar() {
+    var bar = document.querySelector('.stories-row');
+    if (!bar) return;
+    fetch('./core/stories/render_bar.php')
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+            if (html) bar.outerHTML = html;
+        })
+        .catch(function() {});
 }
 
 function loadComments(postId, listEl, csrf) {
@@ -378,11 +415,12 @@ function loadComments(postId, listEl, csrf) {
         }
 
         // close comments overlay
-        if (e.target.classList.contains('sheet-close-trigger') || e.target.closest('.sheet-close-btn')) {
+        if (e.target.classList.contains('sheet-close-trigger') || e.target.closest('.sheet-close-btn') || e.target.classList.contains('story-close-trigger') || e.target.closest('.story-close-btn')) {
             var mobile = document.getElementById('comments-sheet-mobile');
             var desktop = document.getElementById('comments-sheet-desktop');
             mobile.classList.add('hidden');
             desktop.classList.add('hidden');
+            document.getElementById('story-viewer')?.classList.add('hidden');
             document.body.style.overflow = '';
         }
 
@@ -416,6 +454,37 @@ function loadComments(postId, listEl, csrf) {
             return;
         }
 
+        // open story viewer
+        var storyItem = e.target.closest('.story-item');
+        if (storyItem) {
+            var viewer = document.getElementById('story-viewer');
+            document.getElementById('story-avatar').src = storyItem.dataset.avatar;
+            document.getElementById('story-username').textContent = storyItem.dataset.username;
+            var simg = document.getElementById('story-image');
+            if (storyItem.dataset.image) {
+                simg.src = storyItem.dataset.image;
+                simg.style.display = '';
+            } else {
+                simg.style.display = 'none';
+            }
+            var stxt = document.getElementById('story-text');
+            stxt.textContent = storyItem.dataset.content;
+            stxt.style.display = storyItem.dataset.content ? '' : 'none';
+            viewer.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            return;
+        }
+
+        // "Tu historia" button -> focus upload with story mode
+        var storyCreate = e.target.closest('.story-create-btn');
+        if (storyCreate) {
+            var ta = document.querySelector('#upload-form textarea');
+            if (ta) { ta.focus(); ta.scrollIntoView({ behavior: 'smooth' }); }
+            var cb = document.querySelector('#upload-form input[name="is_story"]');
+            if (cb) cb.checked = true;
+            return;
+        }
+
         // delete post
         var delPostBtn = e.target.closest('.delete-post-btn');
         if (delPostBtn) {
@@ -430,7 +499,7 @@ function loadComments(postId, listEl, csrf) {
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.success) {
-                    var card = delPostBtn.closest('.card');
+                    var card = delPostBtn.closest('[data-post-card]');
                     if (card) card.remove();
                 }
             })
@@ -457,7 +526,9 @@ function loadComments(postId, listEl, csrf) {
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (data.error) { console.error(data.error); return; }
-            if (data.html) {
+            if (data.is_story) {
+                refreshStoriesBar();
+            } else if (data.html) {
                 var feed = document.getElementById('feed-container');
                 if (feed) {
                     if (!feed.querySelector('.card')) {

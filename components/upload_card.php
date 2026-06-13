@@ -13,9 +13,15 @@
                 <input type="file" name="image" accept="image/*" onchange="previewImage(event)" class="hidden">
             </label>
 
-            <button type="submit" class="px-5 py-1.5 rounded-lg text-sm font-semibold text-white transition" style="background: var(--accent);">
-                Compartir
-            </button>
+            <div class="flex items-center gap-3">
+                <label class="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
+                    <input type="checkbox" name="is_story" value="1" class="rounded accent-[var(--accent)]">
+                    <i class="bi bi-clock-history"></i> Historia
+                </label>
+                <button type="submit" class="px-5 py-1.5 rounded-lg text-sm font-semibold text-white transition" style="background: var(--accent);">
+                    Compartir
+                </button>
+            </div>
         </div>
 
         <img id="preview" class="mt-3 rounded-lg hidden max-h-60 object-cover w-full">

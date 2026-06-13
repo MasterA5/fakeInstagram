@@ -1,5 +1,5 @@
 <?php require_once(__DIR__ . '/../core/extras/format_datetime.php') ?>
-<div class="card border rounded-none sm:rounded-xl mb-4 animate-slide-up" style="border-color: var(--border);">
+<div class="card border rounded-none sm:rounded-xl mb-4 animate-slide-up" style="border-color: var(--border);" data-post-card="<?= $data['id'] ?>">
     <div class="p-3 sm:p-4">
         <div class="flex items-center justify-between mb-3">
             <a href="?profile=<?= urlencode($data['user_id']) ?>" class="flex items-center gap-3 group">
@@ -62,7 +62,7 @@
                 <textarea name="content" rows="2" class="w-full px-3 py-2 rounded-xl text-sm transition mb-2" style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary);"><?= htmlspecialchars($data['content']) ?></textarea>
                 <input type="file" name="image" class="text-xs text-muted file:mr-2 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-[var(--bg-card-hover)] file:text-white hover:file:bg-[var(--border)]">
                 <div class="flex gap-2 mt-3">
-                    <button class="btn-accent px-4 py-2 rounded-xl text-sm text-white font-semibold transition shadow-lg">
+                    <button type="submit" class="btn-accent px-4 py-2 rounded-xl text-sm text-white font-semibold transition shadow-lg">
                         <i class="bi bi-check-lg"></i> Guardar
                     </button>
                     <button type="button" onclick="toggleEdit('<?= $data['id'] ?>')" class="btn-ghost px-4 py-2 rounded-xl text-sm transition text-muted hover:text-white">
