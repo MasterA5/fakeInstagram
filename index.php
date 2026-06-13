@@ -252,6 +252,28 @@ if (isset($_GET['profile'])) {
     </div>
 </div>
 
+<!-- Story Creation Overlay -->
+<div id="story-create" class="fixed inset-0 z-[70] hidden">
+    <div class="absolute inset-0 bg-black/60 story-close-trigger"></div>
+    <div class="relative m-auto w-full max-w-[420px] h-full sm:h-auto sm:max-h-[90vh] sm:rounded-2xl overflow-hidden" style="background: var(--bg-card);">
+        <div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--border);">
+            <h2 class="font-semibold text-sm">Crear historia</h2>
+            <button class="story-close-btn text-muted hover:text-white text-lg p-1"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="p-4">
+            <textarea id="story-create-content" placeholder="¿Qué está pasando?" rows="3" class="w-full px-3 py-2 rounded-xl text-sm transition mb-3" style="background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); resize: none;"></textarea>
+            <label class="flex items-center gap-1.5 text-sm text-muted hover:text-[var(--accent)] cursor-pointer transition px-3 py-2 rounded-lg hover:bg-[var(--bg-card-hover)] mb-3" style="display: inline-flex;">
+                <i class="bi bi-image text-lg"></i> Añadir imagen
+                <input type="file" id="story-create-image" accept="image/*" class="hidden">
+            </label>
+            <img id="story-create-preview" class="rounded-lg hidden max-h-60 object-cover w-full mb-3">
+            <button id="story-create-submit" class="w-full px-5 py-2 rounded-lg text-sm font-semibold text-white transition" style="background: var(--accent);">
+                Publicar historia
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 function toggleEdit(id) { var el = document.getElementById("edit-" + id); if (el) el.classList.toggle("hidden"); }
 function toggleMenu(id) { var el = document.getElementById(id); if (el) el.classList.toggle("hidden"); }
@@ -421,6 +443,7 @@ function loadComments(postId, listEl, csrf) {
             mobile.classList.add('hidden');
             desktop.classList.add('hidden');
             document.getElementById('story-viewer')?.classList.add('hidden');
+            document.getElementById('story-create')?.classList.add('hidden');
             document.body.style.overflow = '';
         }
 
@@ -475,13 +498,11 @@ function loadComments(postId, listEl, csrf) {
             return;
         }
 
-        // "Tu historia" button -> focus upload with story mode
+        // "Tu historia" button -> open creation overlay
         var storyCreate = e.target.closest('.story-create-btn');
         if (storyCreate) {
-            var ta = document.querySelector('#upload-form textarea');
-            if (ta) { ta.focus(); ta.scrollIntoView({ behavior: 'smooth' }); }
-            var cb = document.querySelector('#upload-form input[name="is_story"]');
-            if (cb) cb.checked = true;
+            document.getElementById('story-create').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
             return;
         }
 
@@ -605,6 +626,56 @@ document.addEventListener('submit', function(e) {
     .finally(function() {
         btn.disabled = false;
         btn.innerHTML = original;
+    });
+});
+
+// Story creation - image preview
+document.getElementById('story-create-image')?.addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        var preview = document.getElementById('story-create-preview');
+        preview.src = ev.target.result;
+        preview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+});
+
+// Story creation - submit
+document.getElementById('story-create-submit')?.addEventListener('click', function() {
+    var overlay = document.getElementById('story-create');
+    var content = document.getElementById('story-create-content').value.trim();
+    if (!content) { alert('Escribe algo para tu historia'); return; }
+    var fileInput = document.getElementById('story-create-image');
+    var btn = this;
+    var original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>';
+
+    var formData = new FormData();
+    formData.append('csrf_token', '<?= generateCsrfToken() ?>');
+    formData.append('content', content);
+    if (fileInput.files[0]) formData.append('image', fileInput.files[0]);
+
+    fetch('./core/stories/create_story.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.error) { alert(data.error); return; }
+        overlay.classList.add('hidden');
+        document.body.style.overflow = '';
+        refreshStoriesBar();
+    })
+    .catch(function() { alert('Error al crear historia'); })
+    .finally(function() {
+        btn.disabled = false;
+        btn.innerHTML = original;
+        document.getElementById('story-create-content').value = '';
+        fileInput.value = '';
+        document.getElementById('story-create-preview').classList.add('hidden');
     });
 });
 
