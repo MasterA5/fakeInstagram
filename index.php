@@ -87,7 +87,7 @@ if (isset($_GET['profile'])) {
 
         .stories-row { display: flex; gap: 16px; overflow-x: auto; padding: 16px 0; scrollbar-width: none; }
         .stories-row::-webkit-scrollbar { display: none; }
-        .story-circle { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: conic-gradient(from 0deg, var(--accent), #f472b6, var(--accent)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .story-circle { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: conic-gradient(from 0deg, var(--accent), #f472b6, var(--accent)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; }
         .story-circle-inner { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; border: 2px solid var(--bg-primary); }
 
         .post-actions { display: flex; align-items: center; gap: 16px; }
@@ -228,22 +228,33 @@ if (isset($_GET['profile'])) {
 </div>
 
 <!-- Story Viewer Overlay -->
-<div id="story-viewer" class="fixed inset-0 z-[70] hidden">
+<div id="story-viewer" class="fixed inset-0 z-[70] hidden" style="animation: fadeIn 0.2s ease-out;">
     <div class="absolute inset-0 bg-black/50 story-close-trigger"></div>
-    <div class="relative w-full h-full flex flex-col" style="background: #000;">
-        <div class="flex items-center justify-between px-4 py-3 absolute top-0 left-0 right-0 z-10" style="background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent);">
+    <div class="relative w-full h-full max-w-[480px] mx-auto flex flex-col">
+        <!-- Progress bar -->
+        <div id="story-progress" class="absolute top-0 left-0 right-0 z-20 flex gap-1 px-2 pt-2">
+        </div>
+
+        <!-- Top bar -->
+        <div class="flex items-center justify-between px-4 py-3 absolute top-3 left-0 right-0 z-10" style="background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent);">
             <div class="flex items-center gap-3">
-                <img id="story-avatar" class="w-8 h-8 rounded-full object-cover ring-2 ring-white/30">
+                <img id="story-avatar" class="w-9 h-9 rounded-full object-cover ring-2 ring-white/40">
                 <p id="story-username" class="font-semibold text-sm text-white"></p>
             </div>
-            <button class="story-close-btn text-white/80 hover:text-white text-lg p-1"><i class="bi bi-x-lg"></i></button>
+            <button class="story-close-btn text-white/80 hover:text-white text-2xl p-1"><i class="bi bi-x-lg"></i></button>
         </div>
 
+        <!-- Navigation zones -->
+        <div id="story-prev" class="absolute top-0 left-0 bottom-0 w-1/3 z-10 cursor-pointer" style="display: none;"></div>
+        <div id="story-next" class="absolute top-0 right-0 bottom-0 w-1/3 z-10 cursor-pointer" style="display: none;"></div>
+
+        <!-- Image -->
         <div class="flex-1 flex items-center justify-center p-2">
-            <img id="story-image" class="w-full h-full object-contain" style="max-width: 100%; max-height: 100vh;">
+            <img id="story-image" class="w-full h-full object-contain transition-opacity duration-300" style="max-width: 100%; max-height: 100vh;">
         </div>
 
-        <div id="story-like-area" class="absolute bottom-0 left-0 right-0 p-5 flex items-center justify-center" style="background: linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent);">
+        <!-- Bottom actions -->
+        <div id="story-bottom" class="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-center gap-6 py-5" style="background: linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent);">
             <button id="story-like-btn" class="flex items-center gap-2 text-3xl transition" style="display: none;">
                 <i class="bi bi-heart"></i>
             </button>
@@ -441,7 +452,9 @@ function loadComments(postId, listEl, csrf) {
             var desktop = document.getElementById('comments-sheet-desktop');
             mobile.classList.add('hidden');
             desktop.classList.add('hidden');
-            document.getElementById('story-viewer')?.classList.add('hidden');
+            var sv = document.getElementById('story-viewer');
+            sv.classList.add('hidden');
+            if (sv._navHandler) { sv.removeEventListener('click', sv._navHandler); sv._navHandler = null; }
             document.getElementById('story-create')?.classList.add('hidden');
             document.body.style.overflow = '';
         }
@@ -479,26 +492,82 @@ function loadComments(postId, listEl, csrf) {
         // open story viewer
         var storyItem = e.target.closest('.story-item');
         if (storyItem) {
+            var userId = storyItem.dataset.userId;
             var viewer = document.getElementById('story-viewer');
-            document.getElementById('story-avatar').src = storyItem.dataset.avatar;
-            document.getElementById('story-username').textContent = storyItem.dataset.username;
-            document.getElementById('story-image').src = storyItem.dataset.image || '';
-            var isOwner = storyItem.dataset.isOwner === '1';
+            var imgEl = document.getElementById('story-image');
             var likeBtn = document.getElementById('story-like-btn');
-            var count = parseInt(storyItem.dataset.likesCount || '0');
-            if (isOwner) {
-                likeBtn.style.display = 'none';
-            } else {
-                var liked = storyItem.dataset.isLiked === '1';
-                likeBtn.style.display = 'flex';
-                likeBtn.dataset.storyId = storyItem.dataset.storyId;
-                likeBtn.dataset.liked = liked ? '1' : '0';
-                var icon = likeBtn.querySelector('i');
-                icon.className = 'bi ' + (liked ? 'bi-heart-fill text-pink-500' : 'bi-heart text-white/70 hover:text-pink-500');
-                likeBtn.innerHTML = icon.outerHTML + ' <span class="text-sm text-white/70 font-semibold">' + count + '</span>';
-            }
+            var prevZone = document.getElementById('story-prev');
+            var nextZone = document.getElementById('story-next');
+            var progressEl = document.getElementById('story-progress');
+            var avatarEl = document.getElementById('story-avatar');
+            var usernameEl = document.getElementById('story-username');
+
+            imgEl.style.opacity = '0';
             viewer.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+
+            var currentIndex = 0;
+            var storiesData = [];
+
+            function showStory(index) {
+                if (!storiesData.length) return;
+                currentIndex = index;
+                var s = storiesData[currentIndex];
+                imgEl.style.opacity = '0';
+                setTimeout(function() {
+                    imgEl.src = s.image || '';
+                    imgEl.style.opacity = '1';
+                }, 80);
+
+                avatarEl.src = s.avatar;
+                usernameEl.textContent = s.username;
+
+                var dots = '';
+                for (var d = 0; d < storiesData.length; d++) {
+                    var fill = d <= currentIndex ? 'var(--accent)' : 'rgba(255,255,255,0.3)';
+                    dots += '<div class="flex-1 h-0.5 rounded-full" style="background: ' + fill + '; transition: background 0.3s;"></div>';
+                }
+                progressEl.innerHTML = dots;
+
+                prevZone.style.display = currentIndex > 0 ? 'block' : 'none';
+                nextZone.style.display = currentIndex < storiesData.length - 1 ? 'block' : 'none';
+
+                if (s.is_owner) {
+                    likeBtn.style.display = 'none';
+                } else {
+                    likeBtn.style.display = 'flex';
+                    likeBtn.dataset.storyId = s.id;
+                    var icon = likeBtn.querySelector('i');
+                    icon.className = 'bi ' + (s.is_liked ? 'bi-heart-fill text-pink-500' : 'bi-heart text-white/70 hover:text-pink-500');
+                    likeBtn.innerHTML = icon.outerHTML + ' <span class="text-sm text-white/70 font-semibold">' + s.likes_count + '</span>';
+                }
+            }
+
+            fetch('./core/stories/get_user_stories.php?user_id=' + encodeURIComponent(userId))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data || data.error || !data.length) { viewer.classList.add('hidden'); document.body.style.overflow = ''; return; }
+                    storiesData = data;
+                    showStory(0);
+                })
+                .catch(function() { viewer.classList.add('hidden'); document.body.style.overflow = ''; });
+
+            // Navigation via click on viewer
+            viewer._navHandler = function(e) {
+                var t = e.target;
+                if (t.closest('.story-close-btn') || t.classList.contains('story-close-trigger')) return;
+                if (t.closest('#story-like-btn')) return;
+
+                var rect = viewer.getBoundingClientRect();
+                var relX = (e.clientX - rect.left) / rect.width;
+
+                if (relX < 0.4 && currentIndex > 0) {
+                    showStory(currentIndex - 1);
+                } else if (relX > 0.6 && currentIndex < storiesData.length - 1) {
+                    showStory(currentIndex + 1);
+                }
+            };
+            viewer.addEventListener('click', viewer._navHandler);
             return;
         }
 

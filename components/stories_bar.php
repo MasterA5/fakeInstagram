@@ -4,16 +4,23 @@ $userId = $_SESSION['user_id'] ?? null;
 // Delete expired stories first
 $conn->query("DELETE FROM stories WHERE expires_at <= NOW()");
 
-$stories = [];
-$sql = "SELECT stories.*, users.username, users.display_name, users.avatar,
-               (SELECT COUNT(*) FROM story_likes WHERE story_id = stories.id) AS likes_count
-        FROM stories
-        JOIN users ON stories.user_id = users.id
-        WHERE stories.expires_at > NOW()
-        ORDER BY stories.created_at DESC
+// Group stories by user, keep the most recent as display
+$sql = "SELECT s1.*, users.username, users.display_name, users.avatar,
+               (SELECT COUNT(*) FROM story_likes WHERE story_id = s1.id) AS likes_count,
+               (SELECT COUNT(*) FROM stories s2 WHERE s2.user_id = s1.user_id AND s2.expires_at > NOW()) AS total_stories
+        FROM stories s1
+        JOIN users ON s1.user_id = users.id
+        WHERE s1.expires_at > NOW()
+        AND s1.id = (
+            SELECT s3.id FROM stories s3
+            WHERE s3.user_id = s1.user_id AND s3.expires_at > NOW()
+            ORDER BY s3.created_at DESC LIMIT 1
+        )
+        ORDER BY s1.created_at DESC
         LIMIT 50";
 $result = $conn->query($sql);
 
+$stories = [];
 while ($row = $result->fetch_assoc()) {
     $isOwner = $userId && $row['user_id'] === $userId;
     $isLiked = 0;
@@ -32,6 +39,7 @@ while ($row = $result->fetch_assoc()) {
         'likes_count' => $row['likes_count'],
         'is_liked' => $isLiked,
         'is_owner' => $isOwner ? 1 : 0,
+        'total' => $row['total_stories'],
     ];
 }
 ?>
@@ -49,19 +57,18 @@ while ($row = $result->fetch_assoc()) {
 
     <?php foreach ($stories as $s): ?>
         <div class="flex flex-col items-center gap-1 story-item cursor-pointer"
-             data-story-id="<?= htmlspecialchars($s['id']) ?>"
              data-user-id="<?= htmlspecialchars($s['user_id']) ?>"
-             data-image="<?= htmlspecialchars($s['image'] ?? '') ?>"
              data-username="<?= htmlspecialchars($s['username']) ?>"
              data-avatar="<?= htmlspecialchars($s['avatar']) ?>"
-             data-likes-count="<?= $s['likes_count'] ?>"
-             data-is-liked="<?= $s['is_liked'] ?>"
              data-is-owner="<?= $s['is_owner'] ?>"
              style="flex-shrink: 0;">
             <div class="story-circle">
                 <div class="story-circle-inner">
                     <img src="<?= htmlspecialchars($s['avatar']) ?>" class="w-full h-full object-cover">
                 </div>
+                <?php if ($s['total'] > 1): ?>
+                    <div class="absolute -bottom-0.5 right-0 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold" style="background: var(--accent); color: white;"><?= $s['total'] ?></div>
+                <?php endif; ?>
             </div>
             <span class="text-[11px] text-muted truncate w-16 text-center"><?= htmlspecialchars($s['username']) ?></span>
         </div>
