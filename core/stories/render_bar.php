@@ -25,7 +25,7 @@ while ($row = $result->fetch_assoc()) {
     <?php endif; ?>
 
     <?php foreach ($stories as $s): ?>
-        <div class="flex flex-col items-center gap-1 story-item cursor-pointer" data-story-id="<?= htmlspecialchars($s['id']) ?>" data-user-id="<?= htmlspecialchars($s['user_id']) ?>" data-image="<?= htmlspecialchars($s['image'] ?? '') ?>" data-content="<?= htmlspecialchars($s['content']) ?>" data-username="<?= htmlspecialchars($s['display_name'] ?? $s['username']) ?>" data-avatar="<?= htmlspecialchars($s['avatar']) ?>" style="flex-shrink: 0;">
+        <div class="flex flex-col items-center gap-1 story-item cursor-pointer" data-story-id="<?= htmlspecialchars($s['id']) ?>" data-user-id="<?= htmlspecialchars($s['user_id']) ?>" data-image="<?= htmlspecialchars($s['image'] ?? '') ?>" data-username="<?= htmlspecialchars($s['display_name'] ?? $s['username']) ?>" data-avatar="<?= htmlspecialchars($s['avatar']) ?>" style="flex-shrink: 0;">
             <div class="story-circle">
                 <div class="story-circle-inner">
                     <img src="<?= htmlspecialchars($s['avatar']) ?>" class="w-full h-full object-cover">

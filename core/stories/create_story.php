@@ -19,8 +19,8 @@ if (!verifyCsrfToken($csrf_token)) {
 }
 
 $content = trim($_POST['content'] ?? '');
-if (empty($content)) {
-    echo json_encode(['error' => 'La historia no puede estar vacía']);
+if (empty($content) && empty($_FILES['image']['tmp_name'])) {
+    echo json_encode(['error' => 'Agrega una imagen a tu historia']);
     exit;
 }
 

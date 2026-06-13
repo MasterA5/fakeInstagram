@@ -229,21 +229,18 @@ if (isset($_GET['profile'])) {
 
 <!-- Story Viewer Overlay -->
 <div id="story-viewer" class="fixed inset-0 z-[70] hidden">
-    <div class="absolute inset-0 bg-black/80 story-close-trigger"></div>
-    <div class="relative m-auto w-full max-w-[420px] h-full sm:h-auto sm:max-h-[90vh] sm:rounded-2xl overflow-hidden" style="background: #000;">
+    <div class="absolute inset-0 bg-black story-close-trigger"></div>
+    <div class="relative w-full h-full flex flex-col" style="background: #000;">
         <div class="flex items-center justify-between px-4 py-3 absolute top-0 left-0 right-0 z-10" style="background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent);">
             <div class="flex items-center gap-3">
                 <img id="story-avatar" class="w-8 h-8 rounded-full object-cover ring-2 ring-white/30">
-                <div>
-                    <p id="story-username" class="font-semibold text-sm text-white"></p>
-                </div>
+                <p id="story-username" class="font-semibold text-sm text-white"></p>
             </div>
             <button class="story-close-btn text-white/80 hover:text-white text-lg p-1"><i class="bi bi-x-lg"></i></button>
         </div>
 
-        <div class="h-full flex flex-col items-center justify-center px-6">
-            <img id="story-image" class="max-w-full max-h-[70vh] object-contain rounded-lg" style="display: none;">
-            <p id="story-text" class="text-white text-lg text-center mt-4" style="display: none;"></p>
+        <div class="flex-1 flex items-center justify-center px-4">
+            <img id="story-image" class="max-w-full max-h-full object-contain">
         </div>
 
         <div class="absolute bottom-0 left-0 right-0 p-4" style="background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent);">
@@ -261,13 +258,13 @@ if (isset($_GET['profile'])) {
             <button class="story-close-btn text-muted hover:text-white text-lg p-1"><i class="bi bi-x-lg"></i></button>
         </div>
         <div class="p-4">
-            <textarea id="story-create-content" placeholder="¿Qué está pasando?" rows="3" class="w-full px-3 py-2 rounded-xl text-sm transition mb-3" style="background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary); resize: none;"></textarea>
-            <label class="flex items-center gap-1.5 text-sm text-muted hover:text-[var(--accent)] cursor-pointer transition px-3 py-2 rounded-lg hover:bg-[var(--bg-card-hover)] mb-3" style="display: inline-flex;">
-                <i class="bi bi-image text-lg"></i> Añadir imagen
+            <label class="flex flex-col items-center justify-center gap-3 cursor-pointer px-6 py-12 rounded-xl transition" style="background: var(--bg-primary); border: 2px dashed var(--border);" id="story-dropzone">
+                <i class="bi bi-camera text-4xl text-muted"></i>
+                <p class="text-muted text-sm font-medium">Haz clic para subir una imagen</p>
                 <input type="file" id="story-create-image" accept="image/*" class="hidden">
             </label>
-            <img id="story-create-preview" class="rounded-lg hidden max-h-60 object-cover w-full mb-3">
-            <button id="story-create-submit" class="w-full px-5 py-2 rounded-lg text-sm font-semibold text-white transition" style="background: var(--accent);">
+            <img id="story-create-preview" class="rounded-lg hidden max-h-[60vh] object-contain w-full mb-3" style="background: #000;">
+            <button id="story-create-submit" class="w-full px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition hidden" style="background: var(--accent);">
                 Publicar historia
             </button>
         </div>
@@ -483,16 +480,7 @@ function loadComments(postId, listEl, csrf) {
             var viewer = document.getElementById('story-viewer');
             document.getElementById('story-avatar').src = storyItem.dataset.avatar;
             document.getElementById('story-username').textContent = storyItem.dataset.username;
-            var simg = document.getElementById('story-image');
-            if (storyItem.dataset.image) {
-                simg.src = storyItem.dataset.image;
-                simg.style.display = '';
-            } else {
-                simg.style.display = 'none';
-            }
-            var stxt = document.getElementById('story-text');
-            stxt.textContent = storyItem.dataset.content;
-            stxt.style.display = storyItem.dataset.content ? '' : 'none';
+            document.getElementById('story-image').src = storyItem.dataset.image || '';
             viewer.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
             return;
@@ -547,9 +535,7 @@ function loadComments(postId, listEl, csrf) {
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (data.error) { console.error(data.error); return; }
-            if (data.is_story) {
-                refreshStoriesBar();
-            } else if (data.html) {
+            if (data.html) {
                 var feed = document.getElementById('feed-container');
                 if (feed) {
                     if (!feed.querySelector('.card')) {
@@ -638,6 +624,8 @@ document.getElementById('story-create-image')?.addEventListener('change', functi
         var preview = document.getElementById('story-create-preview');
         preview.src = ev.target.result;
         preview.classList.remove('hidden');
+        document.getElementById('story-dropzone').classList.add('hidden');
+        document.getElementById('story-create-submit').classList.remove('hidden');
     };
     reader.readAsDataURL(file);
 });
@@ -645,9 +633,8 @@ document.getElementById('story-create-image')?.addEventListener('change', functi
 // Story creation - submit
 document.getElementById('story-create-submit')?.addEventListener('click', function() {
     var overlay = document.getElementById('story-create');
-    var content = document.getElementById('story-create-content').value.trim();
-    if (!content) { alert('Escribe algo para tu historia'); return; }
     var fileInput = document.getElementById('story-create-image');
+    if (!fileInput.files[0]) { alert('Selecciona una imagen'); return; }
     var btn = this;
     var original = btn.innerHTML;
     btn.disabled = true;
@@ -655,8 +642,8 @@ document.getElementById('story-create-submit')?.addEventListener('click', functi
 
     var formData = new FormData();
     formData.append('csrf_token', '<?= generateCsrfToken() ?>');
-    formData.append('content', content);
-    if (fileInput.files[0]) formData.append('image', fileInput.files[0]);
+    formData.append('content', ' ');
+    formData.append('image', fileInput.files[0]);
 
     fetch('./core/stories/create_story.php', {
         method: 'POST',
@@ -673,9 +660,10 @@ document.getElementById('story-create-submit')?.addEventListener('click', functi
     .finally(function() {
         btn.disabled = false;
         btn.innerHTML = original;
-        document.getElementById('story-create-content').value = '';
         fileInput.value = '';
         document.getElementById('story-create-preview').classList.add('hidden');
+        document.getElementById('story-dropzone').classList.remove('hidden');
+        document.getElementById('story-create-submit').classList.add('hidden');
     });
 });
 
