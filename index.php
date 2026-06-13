@@ -229,7 +229,7 @@ if (isset($_GET['profile'])) {
 
 <!-- Story Viewer Overlay -->
 <div id="story-viewer" class="fixed inset-0 z-[70] hidden">
-    <div class="absolute inset-0 bg-black story-close-trigger"></div>
+    <div class="absolute inset-0 bg-black/50 story-close-trigger"></div>
     <div class="relative w-full h-full flex flex-col" style="background: #000;">
         <div class="flex items-center justify-between px-4 py-3 absolute top-0 left-0 right-0 z-10" style="background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent);">
             <div class="flex items-center gap-3">
@@ -239,12 +239,14 @@ if (isset($_GET['profile'])) {
             <button class="story-close-btn text-white/80 hover:text-white text-lg p-1"><i class="bi bi-x-lg"></i></button>
         </div>
 
-        <div class="flex-1 flex items-center justify-center px-4">
-            <img id="story-image" class="max-w-full max-h-full object-contain">
+        <div class="flex-1 flex items-center justify-center p-2">
+            <img id="story-image" class="w-full h-full object-contain" style="max-width: 100%; max-height: 100vh;">
         </div>
 
-        <div class="absolute bottom-0 left-0 right-0 p-4" style="background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent);">
-            <p id="story-expires" class="text-white/60 text-xs text-center"></p>
+        <div id="story-like-area" class="absolute bottom-0 left-0 right-0 p-5 flex items-center justify-center" style="background: linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent);">
+            <button id="story-like-btn" class="flex items-center gap-2 text-3xl transition" style="display: none;">
+                <i class="bi bi-heart"></i>
+            </button>
         </div>
     </div>
 </div>
@@ -481,8 +483,45 @@ function loadComments(postId, listEl, csrf) {
             document.getElementById('story-avatar').src = storyItem.dataset.avatar;
             document.getElementById('story-username').textContent = storyItem.dataset.username;
             document.getElementById('story-image').src = storyItem.dataset.image || '';
+            var isOwner = storyItem.dataset.isOwner === '1';
+            var likeBtn = document.getElementById('story-like-btn');
+            var count = parseInt(storyItem.dataset.likesCount || '0');
+            if (isOwner) {
+                likeBtn.style.display = 'none';
+            } else {
+                var liked = storyItem.dataset.isLiked === '1';
+                likeBtn.style.display = 'flex';
+                likeBtn.dataset.storyId = storyItem.dataset.storyId;
+                likeBtn.dataset.liked = liked ? '1' : '0';
+                var icon = likeBtn.querySelector('i');
+                icon.className = 'bi ' + (liked ? 'bi-heart-fill text-pink-500' : 'bi-heart text-white/70 hover:text-pink-500');
+                likeBtn.innerHTML = icon.outerHTML + ' <span class="text-sm text-white/70 font-semibold">' + count + '</span>';
+            }
             viewer.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            return;
+        }
+
+        // story like/unlike
+        var storyLikeBtn = e.target.closest('#story-like-btn');
+        if (storyLikeBtn) {
+            var storyId = storyLikeBtn.dataset.storyId;
+            var liked = storyLikeBtn.dataset.liked === '1';
+            var csrf = '<?= generateCsrfToken() ?>';
+            fetch('./core/stories/like_story.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'csrf_token=' + encodeURIComponent(csrf) + '&story_id=' + encodeURIComponent(storyId)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.error) return;
+                var icon = storyLikeBtn.querySelector('i');
+                icon.className = 'bi ' + (data.liked ? 'bi-heart-fill text-pink-500' : 'bi-heart text-white/70 hover:text-pink-500');
+                storyLikeBtn.dataset.liked = data.liked ? '1' : '0';
+                storyLikeBtn.innerHTML = icon.outerHTML + ' <span class="text-sm text-white/70 font-semibold">' + data.count + '</span>';
+            })
+            .catch(function() {});
             return;
         }
 
