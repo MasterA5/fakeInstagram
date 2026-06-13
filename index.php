@@ -229,14 +229,14 @@ if (isset($_GET['profile'])) {
 
 <!-- Story Viewer Overlay -->
 <div id="story-viewer" class="fixed inset-0 z-[70] hidden" style="animation: fadeIn 0.2s ease-out;">
-    <div class="absolute inset-0 bg-black/50 story-close-trigger"></div>
+    <div class="absolute inset-0 bg-black/95 story-close-trigger"></div>
     <div class="relative w-full h-full max-w-[480px] mx-auto flex flex-col">
         <!-- Progress bar -->
         <div id="story-progress" class="absolute top-0 left-0 right-0 z-20 flex gap-1 px-2 pt-2">
         </div>
 
         <!-- Top bar -->
-        <div class="flex items-center justify-between px-4 py-3 absolute top-3 left-0 right-0 z-10" style="background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent);">
+        <div class="flex items-center justify-between px-4 py-3 absolute top-3 left-0 right-0 z-20" style="background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent);">
             <div class="flex items-center gap-3">
                 <img id="story-avatar" class="w-9 h-9 rounded-full object-cover ring-2 ring-white/40">
                 <p id="story-username" class="font-semibold text-sm text-white"></p>

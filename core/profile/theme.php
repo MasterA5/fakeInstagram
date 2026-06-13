@@ -14,7 +14,7 @@ if (!verifyCsrfToken($csrf_token)) {
 }
 
 $theme = $_POST['theme'] ?? 'dark';
-$allowed = ['dark', 'light', 'ocean', 'sunset'];
+$allowed = ['dark', 'light', 'ocean', 'sunset', 'forest', 'rose', 'midnight', 'amber'];
 
 if (!in_array($theme, $allowed)) {
     $theme = 'dark';
