@@ -43,7 +43,7 @@ while ($row = $result->fetch_assoc()) {
     ];
 }
 ?>
-<div class="stories-row mb-4">
+<div class="stories-wrapper mb-4"><div class="stories-fade-left"></div><div class="stories-fade-right"></div><div class="stories-row">
     <?php if ($userId): ?>
         <div class="flex flex-col items-center gap-1 story-create-btn cursor-pointer" style="flex-shrink: 0;">
             <div class="story-circle" style="background: var(--border);">
@@ -73,4 +73,4 @@ while ($row = $result->fetch_assoc()) {
             <span class="text-[11px] text-muted truncate w-16 text-center"><?= htmlspecialchars($s['username']) ?></span>
         </div>
     <?php endforeach; ?>
-</div>
+</div></div>

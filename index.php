@@ -85,8 +85,12 @@ if (isset($_GET['profile'])) {
         .profile-grid-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
         .profile-grid-item:hover img { transform: scale(1.05); }
 
-        .stories-row { display: flex; gap: 16px; overflow-x: auto; padding: 16px 0; scrollbar-width: none; }
-        .stories-row::-webkit-scrollbar { display: none; }
+        .stories-row { display: flex; gap: 16px; overflow-x: auto; padding: 16px 0; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        .stories-row::-webkit-scrollbar { height: 0px; }
+        .stories-fade-left, .stories-fade-right { position: absolute; top: 0; bottom: 8px; width: 32px; z-index: 2; pointer-events: none; }
+        .stories-fade-left { left: 0; background: linear-gradient(to right, var(--bg-primary), transparent); }
+        .stories-fade-right { right: 0; background: linear-gradient(to left, var(--bg-primary), transparent); }
+        .stories-wrapper { position: relative; }
         .story-circle { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: conic-gradient(from 0deg, var(--accent), #f472b6, var(--accent)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; }
         .story-circle-inner { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; border: 2px solid var(--bg-primary); }
 
@@ -295,12 +299,12 @@ function escapeHtml(str) {
 }
 
 function refreshStoriesBar() {
-    var bar = document.querySelector('.stories-row');
-    if (!bar) return;
+    var wrapper = document.querySelector('.stories-wrapper');
+    if (!wrapper) return;
     fetch('./core/stories/render_bar.php')
         .then(function(r) { return r.text(); })
         .then(function(html) {
-            if (html) bar.outerHTML = html;
+            if (html) wrapper.outerHTML = html;
         })
         .catch(function() {});
 }
