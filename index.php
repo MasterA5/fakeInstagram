@@ -85,7 +85,7 @@ if (isset($_GET['profile'])) {
         .profile-grid-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
         .profile-grid-item:hover img { transform: scale(1.05); }
 
-        .stories-row { display: flex; gap: 16px; overflow-x: auto; padding: 16px 0; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        .stories-row { display: flex; gap: 16px; overflow-x: auto; padding: 16px 0; scroll-behavior: smooth; touch-action: pan-x; overscroll-behavior: contain; -ms-overflow-style: none; }
         .stories-row::-webkit-scrollbar { height: 0px; }
         .stories-fade-left, .stories-fade-right { position: absolute; top: 0; bottom: 8px; width: 32px; z-index: 2; pointer-events: none; }
         .stories-fade-left { left: 0; background: linear-gradient(to right, var(--bg-primary), transparent); }
