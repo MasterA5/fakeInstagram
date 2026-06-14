@@ -12,12 +12,29 @@ $isOwner = isset($_SESSION['user_id']) && $_SESSION['user_id'] === $profileId;
 $followerCount = getFollowerCount($conn, $profileId);
 $followingCount = getFollowingCount($conn, $profileId);
 $isFollow = !$isOwner && isset($_SESSION['user_id']) && isFollowing($conn, $_SESSION['user_id'], $profileId);
+
+// Check if profile user has active stories
+$storyStmt = $conn->prepare("SELECT COUNT(*) as cnt FROM stories WHERE user_id = ? AND expires_at > NOW()");
+$storyStmt->bind_param("s", $profileId);
+$storyStmt->execute();
+$hasStories = $storyStmt->get_result()->fetch_assoc()['cnt'] > 0;
 ?>
 <div class="px-4 sm:px-0 pt-4 sm:pt-0 animate-slide-up">
     <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-12 mb-6 sm:mb-10">
         <div class="flex-shrink-0">
-            <img src="<?= htmlspecialchars($profileData['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>"
-                 class="w-20 h-20 sm:w-[150px] sm:h-[150px] rounded-full ring-4 ring-[var(--accent)]/20" style="object-fit: cover;">
+            <?php if ($hasStories): ?>
+                <div class="story-item cursor-pointer" data-user-id="<?= htmlspecialchars($profileId) ?>">
+                    <div class="rounded-full p-[2px] sm:p-[3px]" style="background: conic-gradient(from 0deg, var(--accent), #f472b6, var(--accent)); width: fit-content;">
+                        <div class="rounded-full p-[2px]" style="background: var(--bg-primary);">
+                            <img src="<?= htmlspecialchars($profileData['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>"
+                                 class="w-20 h-20 sm:w-[150px] sm:h-[150px] rounded-full" style="object-fit: cover;">
+                        </div>
+                    </div>
+                </div>
+            <?php else: ?>
+                <img src="<?= htmlspecialchars($profileData['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>"
+                     class="w-20 h-20 sm:w-[150px] sm:h-[150px] rounded-full ring-4 ring-[var(--accent)]/20" style="object-fit: cover;">
+            <?php endif; ?>
         </div>
 
         <div class="flex-1 text-center sm:text-left min-w-0">
