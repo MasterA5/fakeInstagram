@@ -141,10 +141,9 @@ if (isset($_GET['profile'])) {
 
             <?php else: ?>
                 <div class="flex flex-col items-center xl:flex-row xl:items-start xl:gap-8 xl:justify-center">
-                    <div class="w-full max-w-[470px] space-y-4">
+                    <div class="w-full max-w-[550px] space-y-4">
                             <?php if ($logged): ?>
                                 <?php include("./components/stories_bar.php"); ?>
-                                <?php include("./components/upload_card.php"); ?>
                                 <?php include("./core/feed/test.php"); ?>
                         <?php else: ?>
                             <?php include("./core/forms/forms.php"); ?>
@@ -288,9 +287,45 @@ if (isset($_GET['profile'])) {
     </div>
 </div>
 
+<!-- Upload Post Overlay -->
+<div id="upload-overlay" class="fixed inset-0 z-[65] hidden">
+    <div class="absolute inset-0 bg-black/60 upload-close-trigger"></div>
+    <div class="relative m-auto w-full max-w-[520px] h-full sm:h-auto sm:max-h-[90vh] sm:rounded-2xl overflow-hidden" style="background: var(--bg-card);">
+        <div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--border);">
+            <h2 class="font-semibold text-sm">Crear post</h2>
+            <button class="upload-close-btn text-muted hover:text-white text-lg p-1"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form id="upload-form" action="./core/post/create_post.php" method="POST" enctype="multipart/form-data" class="p-4">
+            <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+            <div class="flex gap-3 mb-4">
+                <img src="<?= htmlspecialchars($_SESSION['avatar'] ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=default') ?>" class="w-8 h-8 rounded-full flex-shrink-0 object-cover">
+                <textarea name="content" placeholder="¿Qué está pasando?" rows="2" class="flex-1 bg-transparent text-sm resize-none focus:outline-none py-1" style="color: var(--text-primary);"></textarea>
+            </div>
+            <div class="flex items-center justify-between pt-3" style="border-top: 1px solid var(--border);">
+                <label class="flex items-center gap-1.5 text-sm text-muted hover:text-[var(--accent)] cursor-pointer transition px-2 py-1.5 rounded-lg hover:bg-[var(--bg-card-hover)]">
+                    <i class="bi bi-image text-lg"></i>
+                    <span>Subir imagen</span>
+                    <input type="file" name="image" accept="image/*" onchange="previewImage(event)" class="hidden">
+                </label>
+                <button type="submit" class="px-5 py-1.5 rounded-lg text-sm font-semibold text-white transition" style="background: var(--accent);">
+                    Compartir
+                </button>
+            </div>
+            <img id="preview" class="mt-3 rounded-lg hidden max-h-60 object-cover w-full">
+        </form>
+    </div>
+</div>
+
 <script>
-function toggleEdit(id) { var el = document.getElementById("edit-" + id); if (el) el.classList.toggle("hidden"); }
-function toggleMenu(id) { var el = document.getElementById(id); if (el) el.classList.toggle("hidden"); }
+function previewImage(event) {
+    var img = document.getElementById("preview");
+    var file = event.target.files[0];
+    if (file) {
+        var reader = new FileReader();
+        reader.onload = function(e) { img.src = e.target.result; img.classList.remove("hidden"); };
+        reader.readAsDataURL(file);
+    }
+}
 
 var CURRENT_USER_ID = <?= json_encode($_SESSION['user_id'] ?? null) ?>;
 
@@ -451,7 +486,7 @@ function loadComments(postId, listEl, csrf) {
         }
 
         // close comments overlay
-        if (e.target.classList.contains('sheet-close-trigger') || e.target.closest('.sheet-close-btn') || e.target.classList.contains('story-close-trigger') || e.target.closest('.story-close-btn')) {
+        if (e.target.classList.contains('sheet-close-trigger') || e.target.closest('.sheet-close-btn') || e.target.classList.contains('story-close-trigger') || e.target.closest('.story-close-btn') || e.target.classList.contains('upload-close-trigger') || e.target.closest('.upload-close-btn')) {
             var mobile = document.getElementById('comments-sheet-mobile');
             var desktop = document.getElementById('comments-sheet-desktop');
             mobile.classList.add('hidden');
@@ -460,6 +495,9 @@ function loadComments(postId, listEl, csrf) {
             sv.classList.add('hidden');
             if (sv._navHandler) { sv.removeEventListener('click', sv._navHandler); sv._navHandler = null; }
             document.getElementById('story-create')?.classList.add('hidden');
+            document.getElementById('upload-overlay')?.classList.add('hidden');
+            var uf = document.getElementById('upload-form');
+            if (uf) { uf.reset(); var prev = document.getElementById('preview'); if (prev) prev.classList.add('hidden'); }
             document.body.style.overflow = '';
         }
 
@@ -602,6 +640,13 @@ function loadComments(postId, listEl, csrf) {
         var storyCreate = e.target.closest('.story-create-btn');
         if (storyCreate) {
             document.getElementById('story-create').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            return;
+        }
+
+        // upload button -> open upload overlay
+        if (e.target.closest('#upload-btn') || e.target.closest('#upload-btn-mobile')) {
+            document.getElementById('upload-overlay').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
             return;
         }
